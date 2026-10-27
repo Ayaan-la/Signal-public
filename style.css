@@ -1,0 +1,32 @@
+  body { background:#0b0d12; color:#fff; font-family:sans-serif; margin:0; padding:14px; }
+  .card { background:#1f2733; border:2px solid #4ff0e0; border-radius:24px;
+          padding:20px; box-shadow:0 0 18px #4ff0e055; max-width:480px; margin:0 auto 14px; }
+  h1 { color:#4ff0e0; text-align:center; font-size:24px; margin:0 0 12px; }
+  h2 { color:#4ff0e0; font-size:17px; margin:0 0 10px; }
+  .box { background:#000; border:1px solid #4ff0e0; border-radius:14px;
+         text-align:center; padding:14px; margin:12px 0; }
+  .label { color:#888; font-size:14px; }
+  select { background:#0b0d12; color:#4ff0e0; border:1px solid #4ff0e0; border-radius:10px;
+           font-size:18px; padding:6px 10px; margin-top:6px; }
+  .price { font-size:38px; font-weight:bold; margin-top:6px; }
+  .count { text-align:center; font-size:17px; padding:10px; margin-bottom:10px;
+           border-radius:12px; background:#162030; color:#9bb; }
+  .go { background:#5a4300; color:#ffd666; font-weight:bold; }
+  .signal { text-align:center; font-size:21px; font-weight:bold; padding:16px;
+            border-radius:12px; background:#2a3a4d; }
+  .buy { background:#0f5132; color:#6dffb0; }
+  .sell { background:#5c1a1a; color:#ff8a8a; }
+  .barwrap { background:#162030; border-radius:10px; height:12px; margin:12px 0 4px; overflow:hidden; }
+  .bar { height:100%; width:0%; background:#4ff0e0; transition:width .4s; }
+  .small { color:#8aa; font-size:12px; text-align:center; }
+  ul { list-style:none; padding:0; margin:0; }
+  li { padding:7px 0; border-bottom:1px solid #2b3747; font-size:14px; line-height:1.4; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .cell { background:#162030; border-radius:10px; padding:8px; text-align:center; font-size:13px; }
+  .cell b { display:block; color:#4ff0e0; font-size:16px; margin-top:2px; }
+  .win { color:#6dffb0; } .loss { color:#ff8a8a; } .draw { color:#aaa; }
+  .row { display:flex; justify-content:space-between; font-size:14px; padding:5px 0; }
+  .vbtn { display:block; margin:6px auto 0; padding:11px 20px; border-radius:30px;
+          border:1px solid #4ff0e0; background:transparent; color:#4ff0e0; font-size:15px; }
+  .status { color:#777; font-size:12px; text-align:center; margin-top:12px; }
+  .warn { color:#c9a14a; font-size:12px; text-align:center; max-width:480px; margin:0 auto 20px; line-height:1.5; }
