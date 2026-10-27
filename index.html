@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI সিগন্যাল বোর্ড</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0b0d12">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  body { background:#0b0d12; color:#fff; font-family:sans-serif; margin:0; padding:14px; }
+  .card { background:#1f2733; border:2px solid #4ff0e0; border-radius:24px;
+          padding:20px; box-shadow:0 0 18px #4ff0e055; max-width:480px; margin:0 auto 14px; }
+  h1 { color:#4ff0e0; text-align:center; font-size:24px; margin:0 0 12px; }
+  h2 { color:#4ff0e0; font-size:17px; margin:0 0 10px; }
+  .box { background:#000; border:1px solid #4ff0e0; border-radius:14px;
+         text-align:center; padding:14px; margin:12px 0; }
+  .label { color:#888; font-size:14px; }
+  select { background:#0b0d12; color:#4ff0e0; border:1px solid #4ff0e0; border-radius:10px;
+           font-size:18px; padding:6px 10px; margin-top:6px; }
+  .price { font-size:38px; font-weight:bold; margin-top:6px; }
+  .count { text-align:center; font-size:17px; padding:10px; margin-bottom:10px;
+           border-radius:12px; background:#162030; color:#9bb; }
+  .go { background:#5a4300; color:#ffd666; font-weight:bold; }
+  .signal { text-align:center; font-size:21px; font-weight:bold; padding:16px;
+            border-radius:12px; background:#2a3a4d; }
+  .buy { background:#0f5132; color:#6dffb0; }
+  .sell { background:#5c1a1a; color:#ff8a8a; }
+  .barwrap { background:#162030; border-radius:10px; height:12px; margin:12px 0 4px; overflow:hidden; }
+  .bar { height:100%; width:0%; background:#4ff0e0; transition:width .4s; }
+  .small { color:#8aa; font-size:12px; text-align:center; }
+  ul { list-style:none; padding:0; margin:0; }
+  li { padding:7px 0; border-bottom:1px solid #2b3747; font-size:14px; line-height:1.4; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .cell { background:#162030; border-radius:10px; padding:8px; text-align:center; font-size:13px; }
+  .cell b { display:block; color:#4ff0e0; font-size:16px; margin-top:2px; }
+  .win { color:#6dffb0; } .loss { color:#ff8a8a; } .draw { color:#aaa; }
+  .row { display:flex; justify-content:space-between; font-size:14px; padding:5px 0; }
+  .vbtn { display:block; margin:6px auto 0; padding:11px 20px; border-radius:30px;
+          border:1px solid #4ff0e0; background:transparent; color:#4ff0e0; font-size:15px; }
+  .status { color:#777; font-size:12px; text-align:center; margin-top:12px; }
+  .warn { color:#c9a14a; font-size:12px; text-align:center; max-width:480px; margin:0 auto 20px; line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🤖 AI সিগন্যাল বোর্ড</h1>
+  <div class="box">
+    <div class="label">মার্কেট • টাইমফ্রেম: ১ মিনিট</div>
+    <select id="symSel"></select>
+    <div class="price" id="price">0.00000</div>
+  </div>
+  <div class="count" id="count">--</div>
+  <div class="signal" id="signal">বাজার দেখছি...</div>
+  <div class="barwrap"><div class="bar" id="bar"></div></div>
+  <div class="small" id="conf">ইন্ডিকেটরের মিল: -</div>
+</div>
+
+<div class="card">
+  <h2>🧠 সংকেতের কারণ</h2>
+  <ul id="reasons"></ul>
+</div>
+
+<div class="card">
+  <h2>📊 ইন্ডিকেটর</h2>
+  <div class="grid">
+    <div class="cell">RSI<b id="i_rsi">-</b></div>
+    <div class="cell">স্টোকাস্টিক<b id="i_stoch">-</b></div>
+    <div class="cell">Fast EMA<b id="i_ef">-</b></div>
+    <div class="cell">Slow EMA<b id="i_es">-</b></div>
+    <div class="cell">MACD হিস্টোগ্রাম<b id="i_macd">-</b></div>
+    <div class="cell">ATR (ওঠানামা)<b id="i_atr">-</b></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧪 ব্যাকটেস্ট (পুরোনো ক্যান্ডেলে পরীক্ষা)</h2>
+  <div id="bt">হিসাব চলছে...</div>
+  <div class="small" id="be" style="margin-top:8px"></div>
+</div>
+
+<div class="card">
+  <h2>📝 লাইভ রেকর্ড (পেজ খোলা থাকাকালীন)</h2>
+  <div id="live">এখনো কোনো ফলাফল নেই</div>
+  <ul id="hist" style="margin-top:8px"></ul>
+</div>
+
+<div class="card">
+  <button class="vbtn" id="vbtn">🔊 ভয়েস চালু করো</button>
+  <div class="status" id="status">...</div>
+</div>
+<div class="warn">⚠️ এটা শুধু গাণিতিক হিসাব, আর্থিক পরামর্শ নয়। কনফিডেন্স মানে ইন্ডিকেটরগুলো কতটা একমত,
+জেতার সম্ভাবনা নয়। ট্রেডিংয়ে টাকা হারানোর ঝুঁকি আছে।</div>
+
+<script>
+// ====================== সেটিংস ======================
+const WS_URL = 'wss://api.derivws.com/trading/v1/options/ws/public';
+const SYMBOLS = [
+  ['frxEURUSD', 'EUR/USD'], ['frxGBPUSD', 'GBP/USD'], ['frxUSDJPY', 'USD/JPY'],
+  ['frxAUDUSD', 'AUD/USD'], ['R_100', 'Volatility 100'], ['R_50', 'Volatility 50']
+];
+const HISTORY_COUNT = 1000;
+const WINDOW = 60;
+const EMA_FAST = 9, EMA_SLOW = 21;
+const PAYOUT = 0.90;
+const MIN_SCORE = 2;
+// ====================================================
+
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+let SYMBOL = lsGet('sb_symbol', 'frxEURUSD');
+if (!SYMBOLS.some(function (s) { return s[0] === SYMBOL; })) SYMBOL = SYMBOLS[0][0];
+
+let candles = [];
+let pending = [];
+let results = lsGet('sb_results', []);
+let status = 'কানেক্ট হচ্ছে...';
+let backtest = null;
+let clockOffset = 0;      // সার্ভারের সময় - ফোনের সময় (সেকেন্ড)
+let lastTickLocal = 0;
+let ws = null;
+let pingTimer = null;
+
+function nowSec() { return Date.now() / 1000 + clockOffset; }
+
+// ---------- ইন্ডিকেটর ----------
+function emaSeries(values, period) {
+  const k = 2 / (period + 1);
+  const out = [];
+  let e = values[0];
+  for (let i = 0; i < values.length; i++) {
+    e = values[i] * k + e * (1 - k);
+    out.push(e);
+  }
+  return out;
+}
+
+function rsiValue(values, period) {
+  if (values.length <= period) return 50;
+  const gains = [], losses = [];
+  for (let i = 1; i < values.length; i++) {
+    const d = values[i] - values[i - 1];
+    gains.push(Math.max(d, 0));
+    losses.push(Math.max(-d, 0));
+  }
+  let ag = 0, al = 0;
+  for (let i = 0; i < period; i++) { ag += gains[i]; al += losses[i]; }
+  ag /= period; al /= period;
+  for (let i = period; i < gains.length; i++) {
+    ag = (ag * (period - 1) + gains[i]) / period;
+    al = (al * (period - 1) + losses[i]) / period;
+  }
+  if (al === 0) return 100;
+  return 100 - 100 / (1 + ag / al);
+}
+
+function analyze(cs) {
+  if (cs.length < 40) return null;
+  const closes = cs.map(function (c) { return c.c; });
+  const close = closes[closes.length - 1];
+  const last = cs[cs.length - 1], prev = cs[cs.length - 2];
+  let score = 0;
+  const reasons = [];
+
+  // ১) EMA
+  const ef = emaSeries(closes, EMA_FAST).slice(-1)[0];
+  const es = emaSeries(closes, EMA_SLOW).slice(-1)[0];
+  if (ef > es) { score += 1; reasons.push('📈 EMA: ছোট গড় বড় গড়ের উপরে, ট্রেন্ড উপরের দিকে (+১)'); }
+  else { score -= 1; reasons.push('📉 EMA: ছোট গড় বড় গড়ের নিচে, ট্রেন্ড নিচের দিকে (−১)'); }
+
+  // ২) MACD
+  const e12 = emaSeries(closes, 12), e26 = emaSeries(closes, 26);
+  const macd = e12.map(function (v, i) { return v - e26[i]; });
+  const sig = emaSeries(macd, 9);
+  const n = macd.length;
+  const hist = macd[n - 1] - sig[n - 1];
+  const histPrev = macd[n - 2] - sig[n - 2];
+  if (hist > 0) {
+    score += 1;
+    reasons.push('📈 MACD: পজিটিভ' + (hist > histPrev ? ', আর বাড়ছে' : ', তবে কমছে') + ' (+১)');
+  } else if (hist < 0) {
+    score -= 1;
+    reasons.push('📉 MACD: নেগেটিভ' + (hist < histPrev ? ', আর বাড়ছে' : ', তবে কমছে') + ' (−১)');
+  } else {
+    reasons.push('➖ MACD: নিরপেক্ষ (০)');
+  }
+
+  // ৩) RSI
+  const r = rsiValue(closes, 14);
+  if (r < 30) { score += 1; reasons.push('📈 RSI ' + r.toFixed(1) + ': অতিরিক্ত বিক্রি হয়েছে, দাম ফিরে উঠতে পারে (+১)'); }
+  else if (r > 70) { score -= 1; reasons.push('📉 RSI ' + r.toFixed(1) + ': অতিরিক্ত কেনা হয়েছে, দাম নামতে পারে (−১)'); }
+  else { reasons.push('➖ RSI ' + r.toFixed(1) + ': মাঝামাঝি, কোনো ভোট নেই (০)'); }
+
+  // ৪) বলিঞ্জার ব্যান্ড
+  const w = closes.slice(-20);
+  const mean = w.reduce(function (a, b) { return a + b; }, 0) / 20;
+  const sd = Math.sqrt(w.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / 20);
+  const upper = mean + 2 * sd, lower = mean - 2 * sd;
+  if (sd > 0 && close <= lower) { score += 1; reasons.push('📈 বলিঞ্জার: দাম নিচের সীমায় ঠেকেছে (+১)'); }
+  else if (sd > 0 && close >= upper) { score -= 1; reasons.push('📉 বলিঞ্জার: দাম উপরের সীমায় ঠেকেছে (−১)'); }
+  else { reasons.push('➖ বলিঞ্জার: সীমার ভেতরে (০)'); }
+
+  // ৫) স্টোকাস্টিক
+  const last14 = cs.slice(-14);
+  const hh = Math.max.apply(null, last14.map(function (c) { return c.h; }));
+  const ll = Math.min.apply(null, last14.map(function (c) { return c.l; }));
+  const stoch = hh > ll ? (close - ll) / (hh - ll) * 100 : 50;
+  if (stoch < 20) { score += 1; reasons.push('📈 স্টোকাস্টিক ' + stoch.toFixed(0) + ': নিচু এলাকায় (+১)'); }
+  else if (stoch > 80) { score -= 1; reasons.push('📉 স্টোকাস্টিক ' + stoch.toFixed(0) + ': উঁচু এলাকায় (−১)'); }
+  else { reasons.push('➖ স্টোকাস্টিক ' + stoch.toFixed(0) + ': মাঝামাঝি (০)'); }
+
+  // ৬) ক্যান্ডেল প্যাটার্ন
+  const body = Math.abs(last.c - last.o);
+  const tiny = (last.h - last.l) * 0.05 + 1e-12;
+  const bodyN = Math.max(body, tiny);
+  const upperSh = last.h - Math.max(last.o, last.c);
+  const lowerSh = Math.min(last.o, last.c) - last.l;
+  let pattern = null;
+  if (prev.c < prev.o && last.c > last.o && last.o <= prev.c && last.c >= prev.o)
+    pattern = [1, 'বুলিশ এনগালফিং (আগের লাল ক্যান্ডেল ঢেকে দিয়েছে)'];
+  else if (prev.c > prev.o && last.c < last.o && last.o >= prev.c && last.c <= prev.o)
+    pattern = [-1, 'বেয়ারিশ এনগালফিং (আগের সবুজ ক্যান্ডেল ঢেকে দিয়েছে)'];
+  else if (lowerSh >= 2 * bodyN && upperSh <= bodyN * 0.7)
+    pattern = [1, 'হ্যামার (নিচে লম্বা ছায়া)'];
+  else if (upperSh >= 2 * bodyN && lowerSh <= bodyN * 0.7)
+    pattern = [-1, 'শুটিং স্টার (উপরে লম্বা ছায়া)'];
+  if (pattern) {
+    score += pattern[0];
+    reasons.push((pattern[0] > 0 ? '📈' : '📉') + ' ক্যান্ডেল: ' + pattern[1] + ' (' + (pattern[0] > 0 ? '+১' : '−১') + ')');
+  } else {
+    reasons.push('➖ ক্যান্ডেল: বিশেষ প্যাটার্ন নেই (০)');
+  }
+
+  // ATR
+  let atr = 0;
+  for (let i = cs.length - 14; i < cs.length; i++) {
+    const h = cs[i].h, l = cs[i].l, pc = cs[i - 1].c;
+    atr += Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc));
+  }
+  atr /= 14;
+
+  const code = score >= MIN_SCORE ? 'BUY' : score <= -MIN_SCORE ? 'SELL' : 'WAIT';
+  return {
+    code: code, score: score, confidence: Math.round(Math.abs(score) / 6 * 100), reasons: reasons,
+    ind: { ema_fast: ef, ema_slow: es, rsi: r, macd_hist: hist, stoch: stoch, atr: atr }
+  };
+}
+
+// ---------- ব্যাকটেস্ট ----------
+function runBacktest(cs) {
+  let wins = 0, losses = 0, draws = 0, bw = 0, bn = 0, sw = 0, sn = 0, ups = 0;
+  for (let i = 40; i < cs.length - 1; i++) {
+    const a = analyze(cs.slice(Math.max(0, i - WINDOW + 1), i + 1));
+    if (!a || a.code === 'WAIT') continue;
+    const cur = cs[i].c, nxt = cs[i + 1].c;
+    if (nxt === cur) { draws++; continue; }
+    const up = nxt > cur;
+    const win = (a.code === 'BUY' && up) || (a.code === 'SELL' && !up);
+    if (a.code === 'BUY') { bn++; if (win) bw++; } else { sn++; if (win) sw++; }
+    if (win) wins++; else losses++;
+    if (up) ups++;
+  }
+  const total = wins + losses;
+  const pct = function (a, b) { return b ? Math.round(a / b * 1000) / 10 : 0; };
+  return {
+    candles: cs.length, total: total, wins: wins, losses: losses, draws: draws,
+    rate: pct(wins, total), buy_rate: pct(bw, bn), buy_n: bn, sell_rate: pct(sw, sn), sell_n: sn,
+    base_up: pct(ups, total)
+  };
+}
+
+// ---------- লাইভ ডেটা ----------
+function setHistory(rows) {
+  candles = rows.map(function (c) {
+    return { t: +c.epoch, o: +c.open, h: +c.high, l: +c.low, c: +c.close };
+  });
+  if (candles.length > 45) backtest = runBacktest(candles);
+}
+
+function onTick(price, epoch) {
+  const minute = Math.floor(epoch / 60) * 60;
+  const lastC = candles[candles.length - 1];
+  if (lastC && lastC.t === minute) {
+    lastC.c = price;
+    lastC.h = Math.max(lastC.h, price);
+    lastC.l = Math.min(lastC.l, price);
+  } else if (lastC && minute < lastC.t) {
+    // পুরোনো টিক, বাদ
+  } else {
+    candles.push({ t: minute, o: price, h: price, l: price, c: price });
+    if (candles.length > 1500) candles.shift();
+  }
+  clockOffset = epoch - Date.now() / 1000;
+  lastTickLocal = Date.now();
+}
+
+function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+function requestHistory(count) {
+  send({ ticks_history: SYMBOL, count: count, end: 'latest', style: 'candles', granularity: 60 });
+}
+
+let histCount = HISTORY_COUNT;
+function connect() {
+  if (ws) { try { ws.onclose = null; ws.close(); } catch (e) {} }
+  status = 'কানেক্ট হচ্ছে...';
+  ws = new WebSocket(WS_URL);
+  ws.onopen = function () {
+    status = 'কানেক্টেড ✅ ডেটা আনছি...';
+    histCount = HISTORY_COUNT;
+    requestHistory(histCount);
+    send({ ticks: SYMBOL, subscribe: 1 });
+    clearInterval(pingTimer);
+    pingTimer = setInterval(function () { send({ ping: 1 }); }, 25000);
+  };
+  ws.onmessage = function (ev) {
+    let data;
+    try { data = JSON.parse(ev.data); } catch (e) { return; }
+    if (data.error) {
+      status = 'সার্ভার এরর: ' + (data.error.message || JSON.stringify(data.error));
+      if (data.msg_type === 'ticks_history' && histCount > 120) { histCount = 120; requestHistory(histCount); }
+      return;
+    }
+    if (data.candles) { setHistory(data.candles); }
+    else if (data.tick) {
+      onTick(+data.tick.quote, +data.tick.epoch);
+      status = 'কানেক্টেড ✅ লাইভ দাম আসছে';
+    }
+  };
+  ws.onclose = function () {
+    status = 'আবার কানেক্ট হচ্ছে...';
+    clearInterval(pingTimer);
+    setTimeout(connect, 3000);
+  };
+  ws.onerror = function () { try { ws.close(); } catch (e) {} };
+}
+
+// ফোন ব্যাকগ্রাউন্ডে গিয়ে ফিরলে বা ডেটা থেমে গেলে আবার কানেক্ট
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden && Date.now() - lastTickLocal > 20000) connect();
+});
+setInterval(function () {
+  if (!document.hidden && lastTickLocal && Date.now() - lastTickLocal > 30000) connect();
+}, 10000);
+
+// ---------- লাইভ রেকর্ড ----------
+function symResults() { return results.filter(function (r) { return r.symbol === SYMBOL; }); }
+function liveStats() {
+  const rs = symResults();
+  const w = rs.filter(function (r) { return r.result === 'WIN'; }).length;
+  const l = rs.filter(function (r) { return r.result === 'LOSS'; }).length;
+  const d = rs.filter(function (r) { return r.result === 'DRAW'; }).length;
+  return { wins: w, losses: l, draws: d, rate: (w + l) ? Math.round(w / (w + l) * 1000) / 10 : 0 };
+}
+let lastMinute = null;
+setInterval(function () {
+  const now = nowSec();
+  const minute = Math.floor(now / 60) * 60;
+  const fresh = Date.now() - lastTickLocal < 15000;
+  const price = candles.length ? candles[candles.length - 1].c : 0;
+
+  if (now % 60 >= 50 && lastMinute !== minute && fresh) {
+    lastMinute = minute;
+    const a = analyze(candles.slice(-WINDOW));
+    if (a && a.code !== 'WAIT') {
+      pending.push({ signal: a.code, open_at: minute + 60, close_at: minute + 120, entry: null, symbol: SYMBOL });
+    }
+  }
+  const keep = [];
+  pending.forEach(function (p) {
+    if (p.symbol !== SYMBOL) return;
+    if (p.entry === null && now >= p.open_at) {
+      if (fresh) p.entry = price;
+      else if (now - p.open_at > 20) return;
+    }
+    if (p.entry !== null && now >= p.close_at) {
+      if (!fresh) return;
+      let res;
+      if (price === p.entry) res = 'DRAW';
+      else res = ((p.signal === 'BUY') === (price > p.entry)) ? 'WIN' : 'LOSS';
+      results.push({ time: p.open_at, symbol: p.symbol, signal: p.signal, entry: p.entry, exit: price, result: res });
+      results = results.slice(-300);
+      lsSet('sb_results', results);
+      return;
+    }
+    keep.push(p);
+  });
+  pending = keep;
+}, 500);
+
+// ---------- ভয়েস ----------
+let voiceOn = false;
+let spokenKey = null;
+function speak(text) {
+  if (!voiceOn || !('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'bn-BD'; u.pitch = 1.7; u.rate = 0.9;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+document.getElementById('vbtn').addEventListener('click', function () {
+  voiceOn = !voiceOn;
+  this.textContent = voiceOn ? '🔇 ভয়েস বন্ধ করো' : '🔊 ভয়েস চালু করো';
+  if (voiceOn) speak('হাই! আমি তোমার সিগন্যাল সহকারী। কেমন আছো?');
+});
+
+// ---------- স্ক্রিন ----------
+function T(id, v) { document.getElementById(id).textContent = v; }
+function fmt(x, n) { return (x === null || x === undefined || isNaN(x)) ? '-' : Number(x).toFixed(n); }
+function hhmm(ep) {
+  const d = new Date(ep * 1000);
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+const NAMES = { BUY: '📈 উপরে যাওয়ার সংকেত (BUY)', SELL: '📉 নিচে নামার সংকেত (SELL)', WAIT: '⏳ পরিষ্কার সংকেত নেই' };
+
+function render() {
+  const left = Math.floor(60 - (nowSec() % 60));
+  T('price', fmt(candles.length ? candles[candles.length - 1].c : 0, 5));
+  T('status', status);
+  const s = document.getElementById('signal');
+  const c = document.getElementById('count');
+  const a = analyze(candles.slice(-WINDOW));
+  if (!a) {
+    s.textContent = 'ডেটা জমছে... (' + candles.length + '/40 ক্যান্ডেল)';
+    s.className = 'signal';
+    c.textContent = '⏳ ক্যান্ডেল শেষ হতে ' + left + ' সেকেন্ড বাকি';
+    c.className = 'count';
+  } else {
+    const cls = a.code === 'BUY' ? ' buy' : a.code === 'SELL' ? ' sell' : '';
+    if (left <= 10) {
+      const key = Math.floor(nowSec() / 60);
+      if (spokenKey !== key) {
+        spokenKey = key;
+        if (a.code === 'BUY') speak('এন্ট্রির সময়। উপরে যাওয়ার সংকেত।');
+        else if (a.code === 'SELL') speak('এন্ট্রির সময়। নিচে নামার সংকেত।');
+        else speak('এন্ট্রির সময়। এখন কোনো স্পষ্ট সংকেত নেই।');
+      }
+      c.textContent = '⏰ এন্ট্রির সময়! ' + left + ' সেকেন্ড বাকি';
+      c.className = 'count go';
+      s.textContent = NAMES[a.code];
+      s.className = 'signal' + cls;
+    } else {
+      c.textContent = '⏳ ক্যান্ডেল শেষ হতে ' + left + ' সেকেন্ড বাকি';
+      c.className = 'count';
+      s.textContent = 'অপেক্ষা করো... (এখনকার হিসাব: ' + NAMES[a.code] + ')';
+      s.className = 'signal';
+    }
+    document.getElementById('bar').style.width = a.confidence + '%';
+    T('conf', 'ইন্ডিকেটরের মিল: ' + a.confidence + '% (স্কোর ' + a.score + '/৬) — এটা জেতার সম্ভাবনা নয়');
+    const ul = document.getElementById('reasons');
+    ul.innerHTML = '';
+    a.reasons.forEach(function (r) { const li = document.createElement('li'); li.textContent = r; ul.appendChild(li); });
+    T('i_rsi', fmt(a.ind.rsi, 1));
+    T('i_stoch', fmt(a.ind.stoch, 0));
+    T('i_ef', fmt(a.ind.ema_fast, 5));
+    T('i_es', fmt(a.ind.ema_slow, 5));
+    T('i_macd', fmt(a.ind.macd_hist, 6));
+    T('i_atr', fmt(a.ind.atr, 5));
+  }
+  if (backtest) {
+    const b = backtest;
+    if (b.total === 0) T('bt', 'যথেষ্ট ডেটা নেই');
+    else T('bt', b.candles + ' টা ক্যান্ডেলে ' + b.total + ' টা সংকেত: ' + b.wins + ' জেতা, ' + b.losses +
+      ' হারা → জেতার হার ' + b.rate + '%. BUY ' + b.buy_rate + '% (' + b.buy_n + ' টা), SELL ' +
+      b.sell_rate + '% (' + b.sell_n + ' টা). ওই সময়ে দাম উপরে গিয়েছিল ' + b.base_up + '% বার।');
+    T('be', 'পেআউট ' + PAYOUT + ' ধরলে ব্রেক-ইভেন জেতার হার প্রায় ' + (Math.round(100 / (1 + PAYOUT) * 10) / 10) +
+      '%। এর নিচে থাকলে দীর্ঘমেয়াদে লোকসান।');
+  }
+  const L = liveStats();
+  if (L.wins + L.losses + L.draws > 0)
+    T('live', 'জিতেছে ' + L.wins + ', হেরেছে ' + L.losses + ', সমান ' + L.draws + ' → জেতার হার ' + L.rate + '%');
+  const h = document.getElementById('hist');
+  h.innerHTML = '';
+  symResults().slice(-10).reverse().forEach(function (r) {
+    const li = document.createElement('li');
+    const cls = r.result === 'WIN' ? 'win' : r.result === 'LOSS' ? 'loss' : 'draw';
+    const txt = r.result === 'WIN' ? 'জিত ✅' : r.result === 'LOSS' ? 'হার ❌' : 'সমান ➖';
+    li.innerHTML = '<div class="row"><span>' + hhmm(r.time) + ' ' + r.signal + '</span><span class="' + cls + '">' + txt + '</span></div>';
+    h.appendChild(li);
+  });
+}
+
+// ---------- শুরু ----------
+const sel = document.getElementById('symSel');
+SYMBOLS.forEach(function (s) {
+  const o = document.createElement('option');
+  o.value = s[0]; o.textContent = s[1];
+  if (s[0] === SYMBOL) o.selected = true;
+  sel.appendChild(o);
+});
+sel.addEventListener('change', function () {
+  lsSet('sb_symbol', sel.value);
+  location.reload();
+});
+
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+connect();
+render();
+setInterval(render, 1000);
+</script>
+</body>
+</html>
