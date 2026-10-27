@@ -1,6 +1,6 @@
 {
-  "name": "AI সিগন্যাল বোর্ড",
-  "short_name": "সিগন্যাল",
+  "name": "AI Signal Bot",
+  "short_name": "Alpha Signal",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
