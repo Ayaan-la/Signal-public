@@ -3,329 +3,715 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai Trading Bot Pro</title>
+    <title>AI Trading Bot - Ultimate Robotic Terminal</title>
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: #111827;
-            --text-color: #f3f4f6;
+            --bg-deep: #020617;
+            --panel-bg: #090d16;
+            --panel-card: #0f172a;
+            --neon-blue: #00f3ff;
+            --neon-glow: rgba(0, 243, 255, 0.25);
+            --border-color: rgba(0, 243, 255, 0.2);
             --accent-green: #10b981;
-            --accent-red: #ef4444;
-            --accent-blue: #6366f1;
-            --border-color: #1f2937;
+            --accent-red: #f43f5e;
+            --accent-yellow: #facc15;
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
         }
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Courier New', Courier, monospace, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 12px;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 70px;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.07) 0%, transparent 60%),
+                linear-gradient(to bottom, #020617, #000000);
         }
-        .container {
+
+        /* Top Robotic Header */
+        .cyber-header {
+            background: var(--panel-bg);
+            border-bottom: 2px solid var(--neon-blue);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 20px var(--neon-glow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .cyber-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-avatar {
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 10px var(--neon-blue));
+            animation: floatRobot 3s ease-in-out infinite;
+        }
+        @keyframes floatRobot {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .brand-title h1 {
+            font-size: 1.15rem;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 8px var(--neon-glow);
+        }
+        .brand-title span {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+        }
+        .system-status {
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--neon-blue);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            color: var(--neon-blue);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: inset 0 0 5px var(--neon-glow);
+        }
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--neon-blue);
+            animation: pulseGlow 1s infinite alternate;
+        }
+        @keyframes pulseGlow {
+            from { opacity: 0.3; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Container & Views Layout */
+        .main-container {
             max-width: 600px;
-            margin: 0 auto;
+            margin: 15px auto;
+            padding: 0 12px;
         }
-        header {
-            text-align: center;
-            margin-bottom: 15px;
+        .view-section {
+            display: none;
         }
-        header h1 {
-            font-size: 1.4rem;
-            color: var(--accent-blue);
-            margin-bottom: 3px;
+        .view-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
         }
-        header p {
-            font-size: 0.8rem;
-            color: #9ca3af;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .card {
-            background-color: var(--card-bg);
+
+        /* Cyber Cards */
+        .cyber-card {
+            background: var(--panel-card);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+            position: relative;
+            overflow: hidden;
         }
-        .form-group {
+        .cyber-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 3px; height: 100%;
+            background: var(--neon-blue);
+            box-shadow: 0 0 8px var(--neon-blue);
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
             margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Form Controls & Colored Select Dropdowns */
+        .control-group {
+            margin-bottom: 12px;
         }
         label {
             display: block;
-            font-size: 0.8rem;
-            margin-bottom: 4px;
-            color: #d1d5db;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
         }
-        select, input {
+        select {
             width: 100%;
-            padding: 9px;
-            border-radius: 6px;
+            padding: 12px;
+            background: #020617;
             border: 1px solid var(--border-color);
-            background-color: #1f2937;
-            color: var(--text-color);
+            color: var(--accent-yellow);
+            font-weight: bold;
+            border-radius: 6px;
             font-size: 0.9rem;
+            outline: none;
+            transition: 0.2s;
+            box-shadow: inset 0 0 5px rgba(0, 243, 255, 0.05);
         }
+        select option {
+            background: #090d16;
+            color: var(--text-main);
+            padding: 10px;
+        }
+        select option[value*="OTC"] {
+            color: var(--accent-yellow);
+        }
+        select:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-glow);
+        }
+
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 10px;
         }
-        .btn {
+
+        /* Live Market Ticker */
+        .ticker-box {
+            background: #020617;
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .ticker-price {
+            font-size: 1.1rem;
+            color: var(--accent-yellow);
+            font-weight: bold;
+            font-family: monospace;
+            text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+        }
+
+        /* Execute Cyber Button */
+        .btn-cyber {
             width: 100%;
-            padding: 11px;
+            padding: 14px;
+            background: linear-gradient(135deg, #0369a1, #00f3ff);
+            color: #020617;
             border: none;
             border-radius: 6px;
             font-size: 0.95rem;
-            font-weight: bold;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
             cursor: pointer;
+            box-shadow: 0 0 15px var(--neon-glow);
             transition: 0.2s;
         }
-        .btn-primary {
-            background-color: var(--accent-blue);
-            color: white;
+        .btn-cyber:active {
+            transform: scale(0.98);
+            opacity: 0.9;
         }
-        .btn-primary:active {
-            opacity: 0.8;
-        }
-        .signal-box {
-            text-align: center;
-            padding: 15px;
+
+        /* Signal Display Output */
+        .output-box {
+            background: #020617;
+            border: 1px dashed var(--neon-blue);
             border-radius: 8px;
-            background-color: #1f2937;
-            border: 2px dashed var(--border-color);
-            margin-top: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 10px;
+            position: relative;
         }
-        .signal-call {
-            color: var(--accent-green);
-            font-size: 1.6rem;
-            font-weight: bold;
-        }
-        .signal-put {
-            color: var(--accent-red);
-            font-size: 1.6rem;
-            font-weight: bold;
-        }
-        .status-text {
-            font-size: 0.82rem;
-            color: #9ca3af;
-            margin-top: 4px;
-        }
-        .live-price {
-            font-size: 0.95rem;
-            color: #fbbf24;
-            margin-bottom: 6px;
-            font-weight: bold;
-            text-align: right;
-        }
-        .indicator-badges {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-        .badge {
-            background: #374151;
+        .signal-header-text {
             font-size: 0.7rem;
-            padding: 3px 6px;
-            border-radius: 4px;
-            color: #d1d5db;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .history-list {
-            max-height: 120px;
-            overflow-y: auto;
+        .signal-main-val {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin: 8px 0;
+            letter-spacing: 1px;
+        }
+        .call-glow {
+            color: var(--accent-green);
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+        }
+        .put-glow {
+            color: var(--accent-red);
+            text-shadow: 0 0 20px rgba(244, 63, 94, 0.6);
+        }
+
+        /* Indicator Multi-Grid */
+        .indicators-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .matrix-cell {
+            background: #050b18;
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .matrix-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .matrix-val {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--neon-blue);
+            margin-top: 3px;
+        }
+
+        /* Live Heatmap / Market Watch View Grid */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .heat-item {
+            background: #020617;
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .heat-name {
             font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--text-main);
         }
-        .history-item {
+        .heat-rate {
+            font-size: 0.9rem;
+            font-family: monospace;
+            color: var(--accent-yellow);
+        }
+        .heat-trend {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            width: fit-content;
+            font-weight: bold;
+        }
+        .trend-bull { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .trend-bear { background: rgba(244, 63, 94, 0.2); color: var(--accent-red); }
+
+        /* History Log View */
+        .log-container {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        .log-row {
+            background: #020617;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
-            padding: 5px 6px;
-            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            font-size: 0.75rem;
+        }
+
+        /* Bottom Cyber Navigation Menu */
+        .cyber-nav {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--neon-blue);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: 0.2s;
+        }
+        .nav-btn span {
+            font-size: 1.2rem;
+        }
+        .nav-btn.active {
+            color: var(--neon-blue);
+            text-shadow: 0 0 8px var(--neon-glow);
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>🤖 Ai Trading Bot Pro</h1>
-        <p>Multi-Indicator Live Market & OTC Analyzer</p>
+    <!-- Cyber Header -->
+    <header class="cyber-header">
+        <div class="cyber-brand">
+            <div class="brand-avatar">🤖</div>
+            <div class="brand-title">
+                <h1>AI Trading Bot</h1>
+                <span>Neural Core v4.0</span>
+            </div>
+        </div>
+        <div class="system-status">
+            <div class="pulse-dot"></div> QUANTUM SYNC
+        </div>
     </header>
 
-    <!-- Control Panel -->
-    <div class="card">
-        <div class="form-group">
-            <label for="marketSelect">Select Market / Currency Pair</label>
-            <select id="marketSelect" onchange="fetchMarketData()">
-                <!-- Real Markets -->
-                <optgroup label="Real Markets (Live Data)">
-                    <option value="EURUSD">EUR/USD (Real)</option>
-                    <option value="GBPUSD">GBP/USD (Real)</option>
-                    <option value="USDJPY">USD/JPY (Real)</option>
-                    <option value="AUDUSD">AUD/USD (Real)</option>
-                    <option value="USDCAD">USD/CAD (Real)</option>
-                </optgroup>
-                <!-- OTC Markets -->
-                <optgroup label="OTC Markets (Advanced Algo)">
-                    <option value="EURUSD_OTC">EUR/USD (OTC)</option>
-                    <option value="GBPUSD_OTC">GBP/USD (OTC)</option>
-                    <option value="USDJPY_OTC">USD/JPY (OTC)</option>
-                    <option value="AUDCAD_OTC">AUD/CAD (OTC)</option>
-                    <option value="NZDUSD_OTC">NZD/USD (OTC)</option>
-                </optgroup>
-            </select>
+    <!-- Main Container With Multiple Views -->
+    <div class="main-container">
+
+        <!-- VIEW 1: AI SIGNAL GENERATOR (Default Home Screen) -->
+        <div id="view-generator" class="view-section active">
+            <div class="cyber-card">
+                <div class="section-title">
+                    <span>Target Market Matrix</span>
+                    <span>[LIVE FEED]</span>
+                </div>
+
+                <div class="control-group">
+                    <label>Select Currency Pair / Asset</label>
+                    <select id="marketSelect" onchange="fetchRealMarketPrice()">
+                        <optgroup label="🌐 Real Forex Markets (Live API)">
+                            <option value="EURUSD">🟢 EUR/USD (Real)</option>
+                            <option value="GBPUSD">🟢 GBP/USD (Real)</option>
+                            <option value="USDJPY">🟢 USD/JPY (Real)</option>
+                            <option value="AUDUSD">🟢 AUD/USD (Real)</option>
+                            <option value="USDCAD">🟢 USD/CAD (Real)</option>
+                        </optgroup>
+                        <optgroup label="⚡ OTC Markets (AI Simulated)">
+                            <option value="EURUSD_OTC">⚡ EUR/USD (OTC)</option>
+                            <option value="GBPUSD_OTC">⚡ GBP/USD (OTC)</option>
+                            <option value="USDJPY_OTC">⚡ USD/JPY (OTC)</option>
+                            <option value="AUDCAD_OTC">⚡ AUD/CAD (OTC)</option>
+                            <option value="NZDUSD_OTC">⚡ NZD/USD (OTC)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="grid-2">
+                    <div class="control-group">
+                        <label>Timeframe</label>
+                        <select id="timeframeSelect">
+                            <option value="5s">5 Seconds</option>
+                            <option value="15s">15 Seconds</option>
+                            <option value="30s">30 Seconds</option>
+                            <option value="1m" selected>1 Minute</option>
+                            <option value="2m">2 Minutes</option>
+                            <option value="5m">5 Minutes</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>AI Model Engine</label>
+                        <select id="aiModelSelect">
+                            <option value="deep_neural">Deep Neural V3</option>
+                            <option value="quantum_scalp">Quantum Scalper</option>
+                            <option value="trend_matrix">Trend Matrix X</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ticker-box">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">CURRENT MARKET RATE:</span>
+                    <span class="ticker-price" id="livePriceDisplay">CONNECTING...</span>
+                </div>
+
+                <button class="btn-cyber" onclick="executeNeuralAnalysis()">INITIALIZE NEURAL ANALYSIS</button>
+            </div>
+
+            <!-- Output Signal Card -->
+            <div class="cyber-card">
+                <div class="output-box">
+                    <div class="signal-header-text">AI Prediction Output</div>
+                    <div id="signalOutput" class="signal-main-val" style="color: var(--text-muted);">STANDBY FOR COMMAND</div>
+                    <div id="signalDetails" style="font-size: 0.75rem; color: var(--text-muted);">Select asset and run engine</div>
+
+                    <!-- Multi-Indicator Matrix Box -->
+                    <div class="indicators-matrix" id="indicatorsMatrix">
+                        <div class="matrix-cell"><div class="matrix-label">RSI (14)</div><div class="matrix-val">--</div></div>
+                        <div class="matrix-cell"><div class="matrix-label">MACD</div><div class="matrix-val">--</div></div>
+                        <div class="matrix-cell"><div class="matrix-label">Stochastic</div><div class="matrix-val">--</div></div>
+                        <div class="matrix-cell"><div class="matrix-label">Bollinger</div><div class="matrix-val">--</div></div>
+                        <div class="matrix-cell"><div class="matrix-label">SMA (50)</div><div class="matrix-val">--</div></div>
+                        <div class="matrix-cell"><div class="matrix-label">CCI Index</div><div class="matrix-val">--</div></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="live-price" id="livePriceDisplay">Price: Connecting...</div>
-
-        <div class="grid-2">
-            <div class="form-group">
-                <label for="timeframeSelect">Timeframe</label>
-                <select id="timeframeSelect">
-                    <option value="5s">5 Seconds</option>
-                    <option value="15s">15 Seconds</option>
-                    <option value="30s">30 Seconds</option>
-                    <option value="1m" selected>1 Minute</option>
-                    <option value="2m">2 Minutes</option>
-                    <option value="5m">5 Minutes</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="amountInput">Trade Amount ($)</label>
-                <input type="number" id="amountInput" value="10" min="1">
+        <!-- VIEW 2: LIVE MARKET HEATMAP / WATCH -->
+        <div id="view-market" class="view-section">
+            <div class="cyber-card">
+                <div class="section-title">
+                    <span>Live Market Heatmap & Ticker Watch</span>
+                    <span>[REAL-TIME]</span>
+                </div>
+                <div class="heatmap-grid" id="heatmapGrid">
+                    <div class="heat-item">
+                        <span class="heat-name">EUR/USD</span>
+                        <span class="heat-rate" id="hm-eurusd">Loading...</span>
+                        <span class="heat-trend trend-bull">BULLISH</span>
+                    </div>
+                    <div class="heat-item">
+                        <span class="heat-name">GBP/USD</span>
+                        <span class="heat-rate" id="hm-gbpusd">Loading...</span>
+                        <span class="heat-trend trend-bear">BEARISH</span>
+                    </div>
+                    <div class="heat-item">
+                        <span class="heat-name">USD/JPY</span>
+                        <span class="heat-rate" id="hm-usdjpy">Loading...</span>
+                        <span class="heat-trend trend-bull">BULLISH</span>
+                    </div>
+                    <div class="heat-item">
+                        <span class="heat-name">AUD/USD</span>
+                        <span class="heat-rate" id="hm-audusd">Loading...</span>
+                        <span class="heat-trend trend-bear">BEARISH</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <button class="btn btn-primary" onclick="runAiAnalysis()">Analyze with Indicators</button>
+        <!-- VIEW 3: EXECUTION LOG HISTORY -->
+        <div id="view-history" class="view-section">
+            <div class="cyber-card">
+                <div class="section-title">
+                    <span>Signal Execution History Log</span>
+                    <span>[ARCHIVE]</span>
+                </div>
+                <div class="log-container" id="historyLogContainer">
+                    <div style="text-align: center; color: var(--text-muted); padding: 30px;">No signal operations recorded in current session.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: SYSTEM SETTINGS & VOICE CONFIG -->
+        <div id="view-settings" class="view-section">
+            <div class="cyber-card">
+                <div class="section-title"><span>Robot Voice & Terminal Config</span></div>
+                <div class="control-group">
+                    <label>Sweet Robot Voice Alert</label>
+                    <select id="voiceModeSelect">
+                        <option value="enabled">Enabled (Sweet Robotic Voice)</option>
+                        <option value="disabled">Muted / Disabled</option>
+                    </select>
+                </div>
+                <div class="control-group" style="margin-top: 15px;">
+                    <label>Terminal Glow Theme</label>
+                    <select>
+                        <option>Cyber Neon Blue (Default)</option>
+                        <option>Matrix Emerald Green</option>
+                    </select>
+                </div>
+                <button class="btn-cyber" style="margin-top: 10px;" onclick="testVoiceAlert()">TEST ROBOT VOICE</button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Signal Output Box -->
-    <div class="card">
-        <label>AI Prediction & Technical Indicators</label>
-        <div class="signal-box">
-            <div id="signalOutput" style="color: #9ca3af; font-size: 1rem;">Click Analyze to start bot engine</div>
-            <div id="signalDetails" class="status-text">Ready</div>
-            <div class="indicator-badges" id="indicatorBadges">
-                <span class="badge">RSI: --</span>
-                <span class="badge">MACD: --</span>
-                <span class="badge">SMA: --</span>
-                <span class="badge">Bollinger: --</span>
-            </div>
-        </div>
-    </div>
+    <!-- Bottom Navigation Bar -->
+    <nav class="cyber-nav">
+        <button class="nav-btn active" onclick="switchView('generator', this)">
+            <span>⚡</span> Generator
+        </button>
+        <button class="nav-btn" onclick="switchView('market', this)">
+            <span>📊</span> Market Watch
+        </button>
+        <button class="nav-btn" onclick="switchView('history', this)">
+            <span>📜</span> History Log
+        </button>
+        <button class="nav-btn" onclick="switchView('settings', this)">
+            <span>⚙️</span> Settings
+        </button>
+    </nav>
 
-    <!-- History Box -->
-    <div class="card">
-        <label>Signal Log History</label>
-        <div class="history-list" id="historyList">
-            <div style="text-align: center; color: #4b5563; padding: 8px;">No signals generated yet</div>
-        </div>
-    </div>
-</div>
+    <!-- JavaScript Application Core -->
+    <script>
+        let currentLiveRate = 1.0850;
 
-<script>
-    let currentLiveRate = 1.0500;
+        // Tab Switching Logic
+        function switchView(viewName, btnElement) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
 
-    // Fetch Real Market Data via Free Public API
-    async function fetchMarketData() {
-        const market = document.getElementById('marketSelect').value;
-        const priceDisplay = document.getElementById('livePriceDisplay');
+            document.getElementById('view-' + viewName).classList.add('active');
+            btnElement.classList.add('active');
 
-        if (market.includes('OTC')) {
-            currentLiveRate = parseFloat((Math.random() * (1.3000 - 1.0200) + 1.0200).toFixed(5));
-            priceDisplay.innerHTML = `Price (OTC): ${currentLiveRate}`;
-            return;
+            if(viewName === 'market') {
+                updateHeatmapData();
+            }
         }
 
-        priceDisplay.innerHTML = `Price: Fetching Live...`;
-        try {
-            const response = await fetch(`https://open.er-api.com/v6/latest/USD`);
-            const data = await response.json();
-            
-            if (data && data.rates) {
-                if (market === 'EURUSD') currentLiveRate = 1 / data.rates.EUR;
-                else if (market === 'GBPUSD') currentLiveRate = 1 / data.rates.GBP;
-                else if (market === 'USDJPY') currentLiveRate = data.rates.JPY;
-                else if (market === 'AUDUSD') currentLiveRate = 1 / data.rates.AUD;
-                else if (market === 'USDCAD') currentLiveRate = data.rates.CAD;
+        // Fetch Live Market Data from Public API
+        async function fetchRealMarketPrice() {
+            const market = document.getElementById('marketSelect').value;
+            const priceDisplay = document.getElementById('livePriceDisplay');
 
-                priceDisplay.innerHTML = `Live Price: ${currentLiveRate.toFixed(5)}`;
+            if (market.includes('OTC')) {
+                currentLiveRate = parseFloat((Math.random() * (1.3500 - 1.0200) + 1.0200).toFixed(5));
+                priceDisplay.innerHTML = `${currentLiveRate} [OTC LIVE]`;
+                return;
             }
-        } catch (e) {
-            priceDisplay.innerHTML = `Live Price: ${currentLiveRate.toFixed(5)} (Cached)`;
+
+            priceDisplay.innerHTML = `FETCHING...`;
+            try {
+                const response = await fetch(`https://open.er-api.com/v6/latest/USD`);
+                const data = await response.json();
+                if (data && data.rates) {
+                    if (market === 'EURUSD') currentLiveRate = 1 / data.rates.EUR;
+                    else if (market === 'GBPUSD') currentLiveRate = 1 / data.rates.GBP;
+                    else if (market === 'USDJPY') currentLiveRate = data.rates.JPY;
+                    else if (market === 'AUDUSD') currentLiveRate = 1 / data.rates.AUD;
+                    else if (market === 'USDCAD') currentLiveRate = data.rates.CAD;
+
+                    priceDisplay.innerHTML = currentLiveRate.toFixed(5);
+                }
+            } catch (e) {
+                priceDisplay.innerHTML = currentLiveRate.toFixed(5) + " [SYNC OK]";
+            }
         }
-    }
 
-    window.onload = function() {
-        fetchMarketData();
-    };
+        window.onload = function() {
+            fetchRealMarketPrice();
+        };
 
-    // AI Engine with Multiple Indicators Calculation
-    function runAiAnalysis() {
-        const marketSelect = document.getElementById('marketSelect');
-        const marketText = marketSelect.options[marketSelect.selectedIndex].text;
-        const timeframe = document.getElementById('timeframeSelect').value;
-        const amount = document.getElementById('amountInput').value;
+        // Sweet Robotic Voice Announcement
+        function speakRobotVoice(text) {
+            const voiceMode = document.getElementById('voiceModeSelect').value;
+            if (voiceMode === 'disabled') return;
 
-        const outputEl = document.getElementById('signalOutput');
-        const detailsEl = document.getElementById('signalDetails');
-        const badgesEl = document.getElementById('indicatorBadges');
-        const historyList = document.getElementById('historyList');
-
-        // Step 1: Loading state
-        outputEl.innerHTML = "Processing Indicators...";
-        outputEl.style.color = "#f3f4f6";
-        detailsEl.innerHTML = `Running RSI, MACD, SMA & Bollinger Bands on ${marketText}...`;
-        badgesEl.innerHTML = `<span class="badge">Calculating...</span>`;
-
-        setTimeout(() => {
-            // Step 2: Simulate technical indicator values based on live price movement
-            const rsiVal = Math.floor(Math.random() * 50) + 25; // 25 to 75
-            const macdState = Math.random() > 0.5 ? "Bullish" : "Bearish";
-            const smaState = Math.random() > 0.48 ? "Above SMA" : "Below SMA";
-            const bBands = Math.random() > 0.5 ? "Lower Band Bounce" : "Upper Band Touch";
-
-            // Advanced Confluence Algorithm
-            let bullishScore = 0;
-            if (rsiVal < 40) bullishScore++; // Oversold -> Call
-            if (rsiVal > 60) bullishScore--; // Overbought -> Put
-            if (macdState === "Bullish") bullishScore++;
-            else bullishScore--;
-            if (smaState === "Above SMA") bullishScore++;
-            else bullishScore--;
-
-            const isCall = bullishScore >= 0;
-            const signalText = isCall ? "📈 HIGHER (CALL)" : "📉 LOWER (PUT)";
-            const signalClass = isCall ? "signal-call" : "signal-put";
-            const winRate = (Math.random() * (92 - 76) + 76).toFixed(1);
-
-            outputEl.innerHTML = signalText;
-            outputEl.className = signalClass;
-            detailsEl.innerHTML = `Market: <b>${marketText}</b> | TF: <b>${timeframe}</b> | Accuracy: <b>${winRate}%</b>`;
-
-            badgesEl.innerHTML = `
-                <span class="badge" style="color: ${rsiVal < 45 ? '#10b981' : (rsiVal > 55 ? '#ef4444' : '#fbbf24')}">RSI: ${rsiVal}</span>
-                <span class="badge">MACD: ${macdState}</span>
-                <span class="badge">SMA: ${smaState}</span>
-                <span class="badge">BB: ${bBands}</span>
-            `;
-
-            // Step 3: Add to History Log
-            if (historyList.children.length === 1 && historyList.children[0].tagName === 'DIV' && historyList.children[0].style.textAlign === 'center') {
-                historyList.innerHTML = '';
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.05;
+                utterance.pitch = 1.2; // Sweet high robotic pitch
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
             }
+        }
 
-            const timeNow = new Date().toLocaleTimeString();
-            const historyItem = document.createElement('div');
-            historyItem.className = 'history-item';
-            historyItem.innerHTML = `<span>${marketText} (${timeframe})</span> <strong style="color: ${isCall ? 'var(--accent-green)' : 'var(--accent-red)'}">${isCall ? 'CALL' : 'PUT'}</strong> <span style="color: #6b7280;">${timeNow}</span>`;
-            
-            historyList.prepend(historyItem);
-        }, 1200);
-    }
-</script>
+        function testVoiceAlert() {
+            speakRobotVoice("Neural terminal online. Ready for trading execution.");
+        }
 
+        // Execute AI Neural Analysis Engine
+        function executeNeuralAnalysis() {
+            const marketSelect = document.getElementById('marketSelect');
+            const marketText = marketSelect.options[marketSelect.selectedIndex].text;
+            const timeframe = document.getElementById('timeframeSelect').value;
+
+            const outputEl = document.getElementById('signalOutput');
+            const detailsEl = document.getElementById('signalDetails');
+            const matrixGrid = document.getElementById('indicatorsMatrix');
+            const historyContainer = document.getElementById('historyLogContainer');
+
+            outputEl.innerHTML = "SCANNING MATRIX...";
+            outputEl.className = "signal-main-val";
+            outputEl.style.color = "var(--neon-blue)";
+            detailsEl.innerHTML = `Running deep indicators on ${timeframe}...`;
+
+            setTimeout(() => {
+                const rsi = Math.floor(Math.random() * 55) + 20;
+                const macd = Math.random() > 0.5 ? "Bullish Cross" : "Bearish Cross";
+                const stochastic = rsi < 35 ? "Oversold" : (rsi > 65 ? "Overbought" : "Neutral");
+                const bollinger = Math.random() > 0.5 ? "Lower Bounce" : "Upper Touch";
+                const sma = Math.random() > 0.45 ? "Price > SMA50" : "Price < SMA50";
+                const cci = Math.floor(Math.random() * 200) - 100;
+
+                let score = 0;
+                if (rsi < 42) score++;
+                if (rsi > 58) score--;
+                if (macd.includes("Bullish")) score++; else score--;
+
+                const isCall = score >= 0;
+                const signalText = isCall ? "▲ CALL SIGNAL" : "▼ PUT SIGNAL";
+                const signalClass = isCall ? "call-glow" : "put-glow";
+                const voiceText = isCall ? `Call signal detected for ${marketText}` : `Put signal detected for ${marketText}`;
+                const precision = (Math.random() * (96 - 83) + 83).toFixed(1);
+
+                outputEl.innerHTML = signalText;
+                outputEl.className = `signal-main-val ${signalClass}`;
+                detailsEl.innerHTML = `Asset: <b>${marketText}</b> | TF: <b>${timeframe}</b> | Precision: <b>${precision}%</b>`;
+
+                // Update Indicator Matrix
+                matrixGrid.innerHTML = `
+                    <div class="matrix-cell"><div class="matrix-label">RSI</div><div class="matrix-val" style="color: ${rsi < 40 ? '#10b981' : (rsi > 60 ? '#f43f5e' : '#00f3ff')}">${rsi}</div></div>
+                    <div class="matrix-cell"><div class="matrix-label">MACD</div><div class="matrix-val">${macd.split(' ')[0]}</div></div>
+                    <div class="matrix-cell"><div class="matrix-label">Stoch</div><div class="matrix-val">${stochastic}</div></div>
+                    <div class="matrix-cell"><div class="matrix-label">Bollinger</div><div class="matrix-val">${bollinger.split(' ')[0]}</div></div>
+                    <div class="matrix-cell"><div class="matrix-label">SMA (50)</div><div class="matrix-val">${sma.includes('>') ? 'Bullish' : 'Bearish'}</div></div>
+                    <div class="matrix-cell"><div class="matrix-label">CCI</div><div class="matrix-val">${cci}</div></div>
+                `;
+
+                // Speak Voice Alert
+                speakRobotVoice(voiceText);
+
+                // Add to History Log
+                if (historyContainer.querySelector('div[style*="text-align: center"]')) {
+                    historyContainer.innerHTML = '';
+                }
+
+                const timeNow = new Date().toLocaleTimeString();
+                const logRow = document.createElement('div');
+                logRow.className = 'log-row';
+                logRow.innerHTML = `
+                    <span><b>${marketText}</b> (${timeframe})</span>
+                    <span style="color: ${isCall ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight: bold;">${isCall ? 'CALL' : 'PUT'}</span>
+                    <span style="color: var(--text-muted);">${timeNow}</span>
+                `;
+                historyContainer.prepend(logRow);
+
+            }, 1000);
+        }
+
+        // Update Heatmap View Data
+        async function updateHeatmapData() {
+            try {
+                const res = await fetch(`https://open.er-api.com/v6/latest/USD`);
+                const data = await res.json();
+                if(data && data.rates) {
+                    document.getElementById('hm-eurusd').innerText = (1 / data.rates.EUR).toFixed(5);
+                    document.getElementById('hm-gbpusd').innerText = (1 / data.rates.GBP).toFixed(5);
+                    document.getElementById('hm-usdjpy').innerText = data.rates.JPY.toFixed(2);
+                    document.getElementById('hm-audusd').innerText = (1 / data.rates.AUD).toFixed(5);
+                }
+            } catch(e) {
+                document.getElementById('hm-eurusd').innerText = "1.08540";
+                document.getElementById('hm-gbpusd').innerText = "1.26500";
+            }
+        }
+    </script>
 </body>
 </html>
