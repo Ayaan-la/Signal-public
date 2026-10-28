@@ -1,73 +1,220 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI সিগন্যাল বোর্ড</title>
+<title>AI Trading Bot</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#0b0d12">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="style.css?v=2">
+<style>
+  /* ===== Premium Dark Theme Style for Mobile & Desktop ===== */
+  body { background-color: #0b0d12; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 12px; }
+  .card { background: #161b26; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #242c3d; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+  h1, h2 { margin-top: 0; font-size: 1.2rem; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+  h1 { font-size: 1.5rem; color: #f43f5e; justify-content: center; }
+  .box { text-align: center; background: #1e2538; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+  .label { font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+  select { width: 100%; background: #0b0d12; color: #fff; border: 1px solid #3b82f6; padding: 8px; border-radius: 6px; font-size: 1rem; }
+  .price { font-size: 1.8rem; font-weight: bold; margin-top: 8px; color: #10b981; font-family: monospace; }
+  .count { text-align: center; font-size: 1rem; color: #fbbf24; font-weight: bold; }
+  .signal { text-align: center; font-size: 2rem; font-weight: bold; margin: 12px 0; padding: 6px; border-radius: 6px; }
+  .signal.BUY { background: rgba(16,185,129,0.2); color: #10b981; }
+  .signal.SELL { background: rgba(239,68,68,0.2); color: #ef4444; }
+  .signal.WAIT { background: rgba(148,163,184,0.2); color: #94a3b8; }
+  .barwrap { background: #0b0d12; border-radius: 10px; height: 8px; overflow: hidden; margin-bottom: 8px; }
+  .bar { background: #3b82f6; width: 0%; height: 100%; transition: width 0.5s ease; }
+  .small { font-size: 0.85rem; color: #94a3b8; text-align: center; }
+  ul { padding-left: 20px; margin: 0; font-size: 0.9rem; line-height: 1.5; }
+  li { margin-bottom: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .cell { background: #1e2538; padding: 10px; border-radius: 6px; font-size: 0.85rem; color: #94a3b8; display: flex; flex-direction: column; }
+  .cell b { color: #fff; font-size: 1rem; margin-top: 4px; font-family: monospace; }
+  .vbtn { width: 100%; background: #3b82f6; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+  .vbtn.active { background: #10b981; }
+  .status { font-size: 0.8rem; color: #64748b; text-align: center; margin-top: 8px; font-family: monospace; }
+  .warn { font-size: 0.75rem; color: #94a3b8; text-align: justify; padding: 8px; line-height: 1.4; border-top: 1px solid #242c3d; margin-top: 20px; }
+</style>
 </head>
 <body>
+
 <div class="card">
-  <h1>🤖 AI সিগন্যাল বোর্ড</h1>
+  <h1>🤖 AI Trading Bot</h1>
   <div class="box">
-    <div class="label">মার্কেট • টাইমফ্রেম: ১ মিনিট</div>
-    <select id="symSel"></select>
+    <div class="label">Market • Timeframe: 1 Minute</div>
+    <select id="symSel">
+      <option value="R_100">Volatility 100 Index</option>
+      <option value="R_75">Volatility 75 Index</option>
+      <option value="R_50">Volatility 50 Index</option>
+      <option value="R_25">Volatility 25 Index</option>
+      <option value="R_10">Volatility 10 Index</option>
+    </select>
     <div class="price" id="price">0.00000</div>
   </div>
   <div class="count" id="count">--</div>
-  <div class="signal" id="signal">বাজার দেখছি...</div>
+  <div class="signal" id="signal">Scanning Market...</div>
   <div class="barwrap"><div class="bar" id="bar"></div></div>
-  <div class="small" id="conf">ইন্ডিকেটরের মিল: -</div>
+  <div class="small" id="conf">Indicators Alignment: -</div>
 </div>
 
 <div class="card">
-  <h2>🧠 সংকেতের কারণ</h2>
+  <h2>🧠 Signal Breakdown</h2>
   <ul id="reasons"></ul>
 </div>
 
 <div class="card">
-  <h2>📊 ইন্ডিকেটর</h2>
+  <h2>📊 Technical Indicators</h2>
   <div class="grid">
-    <div class="cell">RSI<b id="i_rsi">-</b></div>
-    <div class="cell">স্টোকাস্টিক<b id="i_stoch">-</b></div>
+    <div class="cell">RSI (14)<b id="i_rsi">-</b></div>
+    <div class="cell">Stochastic<b id="i_stoch">-</b></div>
     <div class="cell">Fast EMA<b id="i_ef">-</b></div>
     <div class="cell">Slow EMA<b id="i_es">-</b></div>
-    <div class="cell">MACD হিস্টোগ্রাম<b id="i_macd">-</b></div>
-    <div class="cell">ATR (ওঠানামা)<b id="i_atr">-</b></div>
+    <div class="cell">MACD Histogram<b id="i_macd">-</b></div>
+    <div class="cell">ATR (Volatility)<b id="i_atr">-</b></div>
   </div>
 </div>
 
 <div class="card">
-  <h2>🧪 ব্যাকটেস্ট (পুরোনো ক্যান্ডেলে পরীক্ষা)</h2>
-  <div id="bt">হিসাব চলছে...</div>
+  <h2>🧪 Historical Backtest (On-Chain Data)</h2>
+  <div id="bt">Calculating statistics...</div>
   <div class="small" id="be" style="margin-top:8px"></div>
 </div>
 
 <div class="card">
-  <h2>📝 লাইভ রেকর্ড (পেজ খোলা থাকাকালীন)</h2>
-  <div id="live">এখনো কোনো ফলাফল নেই</div>
+  <h2>📝 Live Record (Active Session)</h2>
+  <div id="live">No trade results recorded yet.</div>
   <ul id="hist" style="margin-top:8px"></ul>
 </div>
 
 <div class="card">
-  <button class="vbtn" id="vbtn">🔊 ভয়েস চালু করো</button>
+  <button class="vbtn" id="vbtn">🔊 Enable Voice Alerts</button>
   <div class="status" id="status">...</div>
 </div>
-<div class="warn">⚠️ এটা শুধু গাণিতিক হিসাব, আর্থিক পরামর্শ নয়। কনফিডেন্স মানে ইন্ডিকেটরগুলো কতটা একমত,
-জেতার সম্ভাবনা নয়। ট্রেডিংয়ে টাকা হারানোর ঝুঁকি আছে।</div>
 
-<script src="config.js?v=2"></script>
-<script src="state.js?v=2"></script>
-<script src="indicators.js?v=2"></script>
-<script src="backtest.js?v=2"></script>
-<script src="data.js?v=2"></script>
-<script src="tracker.js?v=2"></script>
-<script src="ui.js?v=2"></script>
-<script src="main.js?v=2"></script>
-</body>
-</html>
+<div class="warn">⚠️ Disclaimer: This data is generated programmatically for mathematical analysis and does not constitute financial advice. Confidence scoring measures indicator alignment, not win probability. Trading carries substantial risk of financial loss.</div>
+
+<!-- ====================================================================== -->
+<!--                        Complete Trading Bot Engine                     -->
+<!-- ====================================================================== -->
+<script>
+// ===== 1. Global Configurations & State Management =====
+const WS_URL = 'wss://://derivws.com'; 
+let SYMBOL = 'R_100';
+let TF = 60; // 1 Minute = 60 seconds
+const HISTORY_COUNT = 1000;
+const WINDOW = 150;
+const ENTRY_WINDOW = 5;
+const EMA_FAST = 9;
+const EMA_SLOW = 21;
+
+let settings = { minScore: 3 };
+let candles = [];
+let pending = [];
+let results = [];
+let offsetSamples = [];
+let clockOffset = 0;
+let lastTickLocal = 0;
+let ws = null;
+let pingTimer = null;
+let reconnectTimer = null;
+let voiceEnabled = false;
+
+// LocalStorage Utilities
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+
+// Load previous results history
+results = lsGet('sb_results') || [];
+
+function nowSec() { return Math.floor(Date.now() / 1000 + clockOffset); }
+
+// ===== 2. Technical Indicators & Scoring Matrix =====
+function emaSeries(values, period) {
+  const k = 2 / (period + 1);
+  const out = [];
+  let e = values[0];
+  for (let i = 0; i < values.length; i++) {
+    e = values[i] * k + e * (1 - k);
+    out.push(e);
+  }
+  return out;
+}
+
+function rsiValue(values, period) {
+  if (values.length <= period) return 50;
+  const gains = [], losses = [];
+  for (let i = 1; i < values.length; i++) {
+    const d = values[i] - values[i - 1];
+    gains.push(Math.max(d, 0));
+    losses.push(Math.max(-d, 0));
+  }
+  let ag = 0, al = 0;
+  for (let i = 0; i < period; i++) { ag += gains[i]; al += losses[i]; }
+  ag /= period; al /= period;
+  for (let i = period; i < gains.length; i++) {
+    ag = (ag * (period - 1) + gains[i]) / period;
+    al = (al * (period - 1) + losses[i]) / period;
+  }
+  if (al === 0) return 100;
+  return 100 - 100 / (1 + ag / al);
+}
+
+function analyze(cs) {
+  if (cs.length < 40) return null;
+  const closes = cs.map(function (c) { return c.c; });
+  const close = closes[closes.length - 1];
+  const last = cs[cs.length - 1], prev = cs[cs.length - 2];
+  const votes = [];
+  let score = 0;
+  function vote(name, v, text) { score += v; votes.push({ name: name, vote: v, text: text }); }
+
+  // 1) EMA trend
+  const ef = emaSeries(closes, EMA_FAST).slice(-1)[0];
+  const es = emaSeries(closes, EMA_SLOW).slice(-1)[0];
+  if (ef > es) vote('EMA Trend', 1, 'Fast EMA is above slow EMA (Uptrend)');
+  else vote('EMA Trend', -1, 'Fast EMA is below slow EMA (Downtrend)');
+
+  // 2) MACD
+  const e12 = emaSeries(closes, 12), e26 = emaSeries(closes, 26);
+  const macd = e12.map(function (v, i) { return v - e26[i]; });
+  const sig = emaSeries(macd, 9);
+  const n = macd.length;
+  const hist = macd[n - 1] - sig[n - 1];
+  const histPrev = macd[n - 2] - sig[n - 2];
+  if (hist > 0) vote('MACD', 1, 'Histogram positive and ' + (hist > histPrev ? 'rising' : 'fading'));
+  else if (hist < 0) vote('MACD', -1, 'Histogram negative and ' + (hist < histPrev ? 'falling' : 'recovering'));
+  else vote('MACD', 0, 'Histogram is flat');
+
+  // 3) RSI
+  const r = rsiValue(closes, 14);
+  if (r < 30) vote('RSI', 1, 'RSI ' + r.toFixed(1) + ': Oversold zone (potential bounce)');
+  else if (r > 70) vote('RSI', -1, 'RSI ' + r.toFixed(1) + ': Overbought zone (potential pullback)');
+  else vote('RSI', 0, 'RSI ' + r.toFixed(1) + ': Neutral zone');
+
+  // 4) Bollinger Bands
+  const w = closes.slice(-20);
+  const mean = w.reduce(function (a, b) { return a + b; }, 0) / 20;
+  const sd = Math.sqrt(w.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / 20);
+  const upper = mean + 2 * sd, lower = mean - 2 * sd;
+  if (sd > 0 && close <= lower) vote('Bollinger', 1, 'Price trading at lower band line');
+  else if (sd > 0 && close >= upper) vote('Bollinger', -1, 'Price trading at upper band line');
+  else vote('Bollinger', 0, 'Price consolidating inside bands');
+
+  // 5) Stochastic
+  const last14 = cs.slice(-14);
+  const hh = Math.max.apply(null, last14.map(function (c) { return c.h; }));
+  const ll = Math.min.apply(null, last14.map(function (c) { return c.l; }));
+  const stoch = hh > ll ? (close - ll) / (hh - ll) * 100 : 50;
+  if (stoch < 20) vote('Stochastic', 1, 'Stochastic ' + stoch.toFixed(0) + ': Low range value');
+  else if (stoch > 80) vote('Stochastic', -1, 'Stochastic ' + stoch.toFixed(0) + ': High range value');
+  else vote('Stochastic', 0, 'Stochastic ' + stoch.toFixed(0) + ': Mid-range value');
+
+  // 6) Candle Patterns
+  const body = Math.abs(last.c - last.o);
+  const tiny = (last.h - last.l) * 0.05 + 1e-12;
+  const bodyN = Math.max(body, tiny);
+  const upperSh = last.h - Math.max(last.o, last.c);
+  const lowerSh = Math.min(last.o, last.c) - last.l;
+  if (prev.c < prev.o && last.c > last.o && last.o <= prev.c && last.c >= prev.o) vote('Candle', 1, 'Bullish engulfing setup detected');
