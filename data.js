@@ -1,29 +1,25 @@
-// ===== Deriv থেকে লাইভ ডেটা (WebSocket) =====
+// ===== Live market data from Deriv (WebSocket) =====
 function setHistory(rows) {
   candles = rows.map(function (c) {
     return { t: +c.epoch, o: +c.open, h: +c.high, l: +c.low, c: +c.close };
   });
-  // চলমান (অসম্পূর্ণ) ক্যান্ডেল ব্যাকটেস্টে ধরা হয় না
-  let closed = candles;
-  const curMinute = Math.floor(nowSec() / 60) * 60;
-  if (closed.length && closed[closed.length - 1].t >= curMinute) closed = closed.slice(0, -1);
-  if (closed.length > 45) backtest = runBacktest(closed);
+  refreshBacktest();
 }
 
 function onTick(price, epoch) {
-  const minute = Math.floor(epoch / 60) * 60;
+  const bucket = Math.floor(epoch / TF) * TF;
   const lastC = candles[candles.length - 1];
-  if (lastC && lastC.t === minute) {
+  if (lastC && lastC.t === bucket) {
     lastC.c = price;
     lastC.h = Math.max(lastC.h, price);
     lastC.l = Math.min(lastC.l, price);
-  } else if (lastC && minute < lastC.t) {
-    // পুরোনো টিক, বাদ
+  } else if (lastC && bucket < lastC.t) {
+    // old tick, ignore
   } else {
-    candles.push({ t: minute, o: price, h: price, l: price, c: price });
+    candles.push({ t: bucket, o: price, h: price, l: price, c: price });
     if (candles.length > 1500) candles.shift();
   }
-  // সময়ের ফারাক: নেটওয়ার্ক দেরির কারণে নমুনা সবসময় একটু কম আসে, তাই সবচেয়ে বড়টা নিই
+  // Network delay makes each sample slightly low, so the largest recent sample is closest to the truth.
   offsetSamples.push(epoch - Date.now() / 1000);
   if (offsetSamples.length > 30) offsetSamples.shift();
   clockOffset = Math.max.apply(null, offsetSamples);
@@ -32,11 +28,13 @@ function onTick(price, epoch) {
 }
 
 function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+
 function requestHistory(count) {
-  send({ ticks_history: SYMBOL, count: count, end: 'latest', style: 'candles', granularity: 60 });
+  send({ ticks_history: SYMBOL, count: count, end: 'latest', style: 'candles', granularity: TF });
 }
 
 let histCount = HISTORY_COUNT;
+
 function scheduleReconnect(ms) {
   if (reconnectTimer) return;
   reconnectTimer = setTimeout(function () { reconnectTimer = null; connect(); }, ms);
@@ -45,10 +43,10 @@ function scheduleReconnect(ms) {
 function connect() {
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   if (ws) { try { ws.onclose = null; ws.close(); } catch (e) {} }
-  status = 'কানেক্ট হচ্ছে...';
+  status = 'Connecting...';
   ws = new WebSocket(WS_URL);
   ws.onopen = function () {
-    status = 'কানেক্টেড ✅ ডেটা আনছি...';
+    status = 'Connected, loading history...';
     histCount = HISTORY_COUNT;
     requestHistory(histCount);
     send({ ticks: SYMBOL, subscribe: 1 });
@@ -59,27 +57,28 @@ function connect() {
     let data;
     try { data = JSON.parse(ev.data); } catch (e) { return; }
     if (data.error) {
-      status = 'সার্ভার এরর: ' + (data.error.message || JSON.stringify(data.error));
+      status = 'Server error: ' + (data.error.message || JSON.stringify(data.error));
       if (data.msg_type === 'ticks_history' && histCount > 120) { histCount = 120; requestHistory(histCount); }
       return;
     }
-    if (data.candles) { setHistory(data.candles); }
-    else if (data.tick) {
+    if (data.candles) {
+      setHistory(data.candles);
+    } else if (data.tick) {
       onTick(+data.tick.quote, +data.tick.epoch);
-      status = 'কানেক্টেড ✅ লাইভ দাম আসছে';
+      status = 'Streaming live prices';
     }
   };
   ws.onclose = function () {
-    status = 'আবার কানেক্ট হচ্ছে...';
+    status = 'Reconnecting...';
     clearInterval(pingTimer);
     scheduleReconnect(3000);
   };
   ws.onerror = function () { try { ws.close(); } catch (e) {} };
 }
 
-// ফোন ব্যাকগ্রাউন্ডে গিয়ে ফিরলে বা ডেটা থেমে গেলে আবার কানেক্ট
+// Reconnect when the phone wakes up or the feed goes quiet.
 function ensureConnected() {
-  if (ws && ws.readyState === 0) return;           // এখনো কানেক্ট হচ্ছে
+  if (ws && ws.readyState === 0) return;
   if (!ws || ws.readyState >= 2 || Date.now() - lastTickLocal > 30000) connect();
 }
 document.addEventListener('visibilitychange', function () {

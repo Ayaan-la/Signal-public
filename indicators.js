@@ -1,4 +1,4 @@
-// ===== ইন্ডিকেটর আর সংকেতের হিসাব =====
+// ===== Indicators and signal logic =====
 function emaSeries(values, period) {
   const k = 2 / (period + 1);
   const out = [];
@@ -29,84 +29,75 @@ function rsiValue(values, period) {
   return 100 - 100 / (1 + ag / al);
 }
 
+// Takes a list of candles and returns a signal with the reason behind each vote.
 function analyze(cs) {
   if (cs.length < 40) return null;
   const closes = cs.map(function (c) { return c.c; });
   const close = closes[closes.length - 1];
   const last = cs[cs.length - 1], prev = cs[cs.length - 2];
+  const votes = [];
   let score = 0;
-  const reasons = [];
+  function vote(name, v, text) { score += v; votes.push({ name: name, vote: v, text: text }); }
 
-  // ১) EMA
+  // 1) EMA trend
   const ef = emaSeries(closes, EMA_FAST).slice(-1)[0];
   const es = emaSeries(closes, EMA_SLOW).slice(-1)[0];
-  if (ef > es) { score += 1; reasons.push('📈 EMA: ছোট গড় বড় গড়ের উপরে, ট্রেন্ড উপরের দিকে (+১)'); }
-  else { score -= 1; reasons.push('📉 EMA: ছোট গড় বড় গড়ের নিচে, ট্রেন্ড নিচের দিকে (−১)'); }
+  if (ef > es) vote('EMA trend', 1, 'Fast EMA is above slow EMA (uptrend)');
+  else vote('EMA trend', -1, 'Fast EMA is below slow EMA (downtrend)');
 
-  // ২) MACD
+  // 2) MACD
   const e12 = emaSeries(closes, 12), e26 = emaSeries(closes, 26);
   const macd = e12.map(function (v, i) { return v - e26[i]; });
   const sig = emaSeries(macd, 9);
   const n = macd.length;
   const hist = macd[n - 1] - sig[n - 1];
   const histPrev = macd[n - 2] - sig[n - 2];
-  if (hist > 0) {
-    score += 1;
-    reasons.push('📈 MACD: পজিটিভ' + (hist > histPrev ? ', আর বাড়ছে' : ', তবে কমছে') + ' (+১)');
-  } else if (hist < 0) {
-    score -= 1;
-    reasons.push('📉 MACD: নেগেটিভ' + (hist < histPrev ? ', আর বাড়ছে' : ', তবে কমছে') + ' (−১)');
-  } else {
-    reasons.push('➖ MACD: নিরপেক্ষ (০)');
-  }
+  if (hist > 0) vote('MACD', 1, 'Histogram positive and ' + (hist > histPrev ? 'rising' : 'fading'));
+  else if (hist < 0) vote('MACD', -1, 'Histogram negative and ' + (hist < histPrev ? 'falling' : 'recovering'));
+  else vote('MACD', 0, 'Histogram is flat');
 
-  // ৩) RSI
+  // 3) RSI
   const r = rsiValue(closes, 14);
-  if (r < 30) { score += 1; reasons.push('📈 RSI ' + r.toFixed(1) + ': অতিরিক্ত বিক্রি হয়েছে, দাম ফিরে উঠতে পারে (+১)'); }
-  else if (r > 70) { score -= 1; reasons.push('📉 RSI ' + r.toFixed(1) + ': অতিরিক্ত কেনা হয়েছে, দাম নামতে পারে (−১)'); }
-  else { reasons.push('➖ RSI ' + r.toFixed(1) + ': মাঝামাঝি, কোনো ভোট নেই (০)'); }
+  if (r < 30) vote('RSI', 1, 'RSI ' + r.toFixed(1) + ': oversold, a bounce is possible');
+  else if (r > 70) vote('RSI', -1, 'RSI ' + r.toFixed(1) + ': overbought, a pullback is possible');
+  else vote('RSI', 0, 'RSI ' + r.toFixed(1) + ': neutral zone');
 
-  // ৪) বলিঞ্জার ব্যান্ড
+  // 4) Bollinger Bands
   const w = closes.slice(-20);
   const mean = w.reduce(function (a, b) { return a + b; }, 0) / 20;
   const sd = Math.sqrt(w.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / 20);
   const upper = mean + 2 * sd, lower = mean - 2 * sd;
-  if (sd > 0 && close <= lower) { score += 1; reasons.push('📈 বলিঞ্জার: দাম নিচের সীমায় ঠেকেছে (+১)'); }
-  else if (sd > 0 && close >= upper) { score -= 1; reasons.push('📉 বলিঞ্জার: দাম উপরের সীমায় ঠেকেছে (−১)'); }
-  else { reasons.push('➖ বলিঞ্জার: সীমার ভেতরে (০)'); }
+  if (sd > 0 && close <= lower) vote('Bollinger', 1, 'Price is at the lower band');
+  else if (sd > 0 && close >= upper) vote('Bollinger', -1, 'Price is at the upper band');
+  else vote('Bollinger', 0, 'Price is inside the bands');
 
-  // ৫) স্টোকাস্টিক
+  // 5) Stochastic
   const last14 = cs.slice(-14);
   const hh = Math.max.apply(null, last14.map(function (c) { return c.h; }));
   const ll = Math.min.apply(null, last14.map(function (c) { return c.l; }));
   const stoch = hh > ll ? (close - ll) / (hh - ll) * 100 : 50;
-  if (stoch < 20) { score += 1; reasons.push('📈 স্টোকাস্টিক ' + stoch.toFixed(0) + ': নিচু এলাকায় (+১)'); }
-  else if (stoch > 80) { score -= 1; reasons.push('📉 স্টোকাস্টিক ' + stoch.toFixed(0) + ': উঁচু এলাকায় (−১)'); }
-  else { reasons.push('➖ স্টোকাস্টিক ' + stoch.toFixed(0) + ': মাঝামাঝি (০)'); }
+  if (stoch < 20) vote('Stochastic', 1, 'Stochastic ' + stoch.toFixed(0) + ': low zone');
+  else if (stoch > 80) vote('Stochastic', -1, 'Stochastic ' + stoch.toFixed(0) + ': high zone');
+  else vote('Stochastic', 0, 'Stochastic ' + stoch.toFixed(0) + ': mid zone');
 
-  // ৬) ক্যান্ডেল প্যাটার্ন
+  // 6) Candle pattern
   const body = Math.abs(last.c - last.o);
   const tiny = (last.h - last.l) * 0.05 + 1e-12;
   const bodyN = Math.max(body, tiny);
   const upperSh = last.h - Math.max(last.o, last.c);
   const lowerSh = Math.min(last.o, last.c) - last.l;
-  let pattern = null;
   if (prev.c < prev.o && last.c > last.o && last.o <= prev.c && last.c >= prev.o)
-    pattern = [1, 'বুলিশ এনগালফিং (আগের লাল ক্যান্ডেল ঢেকে দিয়েছে)'];
+    vote('Candle', 1, 'Bullish engulfing');
   else if (prev.c > prev.o && last.c < last.o && last.o >= prev.c && last.c <= prev.o)
-    pattern = [-1, 'বেয়ারিশ এনগালফিং (আগের সবুজ ক্যান্ডেল ঢেকে দিয়েছে)'];
+    vote('Candle', -1, 'Bearish engulfing');
   else if (lowerSh >= 2 * bodyN && upperSh <= bodyN * 0.7)
-    pattern = [1, 'হ্যামার (নিচে লম্বা ছায়া)'];
+    vote('Candle', 1, 'Hammer (long lower shadow)');
   else if (upperSh >= 2 * bodyN && lowerSh <= bodyN * 0.7)
-    pattern = [-1, 'শুটিং স্টার (উপরে লম্বা ছায়া)'];
-  if (pattern) {
-    score += pattern[0];
-    reasons.push((pattern[0] > 0 ? '📈' : '📉') + ' ক্যান্ডেল: ' + pattern[1] + ' (' + (pattern[0] > 0 ? '+১' : '−১') + ')');
-  } else {
-    reasons.push('➖ ক্যান্ডেল: বিশেষ প্যাটার্ন নেই (০)');
-  }
+    vote('Candle', -1, 'Shooting star (long upper shadow)');
+  else
+    vote('Candle', 0, 'No notable pattern');
 
-  // ATR
+  // ATR (shown for volatility only)
   let atr = 0;
   for (let i = cs.length - 14; i < cs.length; i++) {
     const h = cs[i].h, l = cs[i].l, pc = cs[i - 1].c;
@@ -114,9 +105,10 @@ function analyze(cs) {
   }
   atr /= 14;
 
-  const code = score >= MIN_SCORE ? 'BUY' : score <= -MIN_SCORE ? 'SELL' : 'WAIT';
+  const need = settings.minScore;
+  const code = score >= need ? 'BUY' : score <= -need ? 'SELL' : 'WAIT';
   return {
-    code: code, score: score, confidence: Math.round(Math.abs(score) / 6 * 100), reasons: reasons,
+    code: code, score: score, confidence: Math.round(Math.abs(score) / 6 * 100), votes: votes,
     ind: { ema_fast: ef, ema_slow: es, rsi: r, macd_hist: hist, stoch: stoch, atr: atr }
   };
 }
