@@ -749,7 +749,7 @@ function initWebSocketConnection() {
         try { ws.onclose = null; ws.close(); } catch(e) {}
     }
 
-    ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+    ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=34ObuuONfNM0bGsAj4V0M');
     
     ws.onopen = () => {
         document.getElementById('connectionStatus').textContent = t('statusConn');
