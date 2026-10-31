@@ -35,7 +35,7 @@ nav div{flex:1;text-align:center;padding:10px 0;color:#6a5890;font-size:9px;curs
 .mk{display:flex;justify-content:space-between;padding:13px 4px;border-bottom:1px solid #2a1458;cursor:pointer}sec{display:none}sec.on{display:block}
 #ov{position:fixed;inset:0;background:var(--bg);z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}#ov .rb{width:170px}#bl{min-height:70px;color:var(--a);font-size:10px;line-height:2}
 #pc{height:460px;touch-action:none;margin-top:10px;border:1px solid #2a1458;cursor:crosshair}#gate{position:fixed;inset:0;background:var(--bg);z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}#gate .rb{width:130px}#gk{width:80%;max-width:320px;background:#07030f;color:var(--a);border:1px solid #2a1458;padding:14px;font:inherit;text-align:center;letter-spacing:3px;font-size:15px}</style></head><body>
-<div id="gate"><div class="rbh rbw WAIT"></div><h1 style="flex:none;font-size:20px">ACCESS REQUIRED<small>ENTER YOUR PRIVATE KEY</small></h1><input id="gk" placeholder="XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"><button class="b pri" id="gb" style="width:80%;max-width:320px">UNLOCK</button><div id="gm" class="note" style="padding:0 20px"></div></div>
+<div id="gate"><div class="rbh rbw WAIT"></div><h1 style="flex:none;font-size:20px">ACCESS REQUIRED<small>ENTER YOUR PRIVATE KEY</small></h1><div class="note">YOUR DEVICE ID<br><b id="gd" style="color:var(--y);font-size:16px;letter-spacing:3px"></b></div><input id="gk" placeholder="XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"><button class="b pri" id="gb" style="width:80%;max-width:320px">UNLOCK</button><div id="gm" class="note" style="padding:0 20px"></div></div>
 <div class="scan"></div>
 <div id="ov"><div class="rbh rbw WAIT"></div><h1 style="flex:none;font-size:20px">CYBER SIGNAL HUB<small>REAL LIVE MARKET FEED</small></h1><div id="bl"></div><button class="b pri" id="go" style="width:80%;max-width:320px">▶ INITIALIZE SYSTEM</button></div>
 <header><div class="rbh" id="hr"></div><h1>CYBER SIGNAL HUB<small>LIVE DERIV FEED · 11 INDICATORS</small></h1><div id="st">OFFLINE</div></header>
@@ -283,13 +283,15 @@ for(let o=0;o<n;o+=64){for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);for(let i=1
 let[a,b2,c,d,e,f,g,hh]=h;for(let i=0;i<64;i++){const S1=r(e,6)^r(e,11)^r(e,25),ch=(e&f)^(~e&g),t1=(hh+S1+ch+K[i]+w[i])|0,S0=r(a,2)^r(a,13)^r(a,22),mj=(a&b2)^(a&c)^(b2&c),t2=(S0+mj)|0;hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0}
 h=[h[0]+a,h[1]+b2,h[2]+c,h[3]+d,h[4]+e,h[5]+f,h[6]+g,h[7]+hh].map(x=>x|0)}
 return h.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('')}
+let dev='';try{dev=localStorage.getItem('cx_dev')||'';if(!dev){const a=new Uint8Array(8),AL2='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';try{crypto.getRandomValues(a)}catch(e){for(let i=0;i<8;i++)a[i]=Math.random()*256}dev=[...a].map(x=>AL2[x%32]).join('').replace(/(.{4})(.{4})/,'$1-$2');localStorage.setItem('cx_dev',dev)}}catch(e){dev='NOSTORE'}
+$('gd').textContent=dev;
 const ACC={ok:false,name:''},nk=k=>(k||'').trim().toUpperCase();
-async function accCheck(k){k=nk(k);try{const r=await fetch('access.json?'+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json(),e=(j.keys||{})[sha256(k)];
+async function accCheck(k){k=nk(k);try{const r=await fetch('access.json?'+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json(),kk=j.keys||{},e=kk[sha256(k+'|'+dev)]||kk[sha256(k)];
 if(!e||e.on===false)return'denied';if(e.e&&Date.now()>Date.parse(e.e+'T23:59:59Z'))return'expired';ACC.name=e.n||'';try{localStorage.setItem('cx_ok',Date.now())}catch(x){}return'ok'}
 catch(x){let t=0,s='';try{t=+localStorage.getItem('cx_ok')||0;s=localStorage.getItem('cx_key')}catch(y){}return(Date.now()-t<6*36e5&&s===k)?'ok':'offline'}}
 async function unlock(k,silent){const r=await accCheck(k);
-if(r==='ok'){ACC.ok=true;try{localStorage.setItem('cx_key',nk(k))}catch(x){}$('gate').style.display='none';return}
-if(r==='denied'||r==='expired'){try{localStorage.removeItem('cx_key')}catch(x){}}
+if(r==='ok'){ACC.ok=true;try{localStorage.setItem('cx_key',nk(k))}catch(x){}$('gate').style.display='none';if(!silent){say('Access granted. Welcome, operator.');tone(880,0,.1);tone(1320,.12,.16)}return}
+if(r==='denied'||r==='expired'){try{localStorage.removeItem('cx_key')}catch(x){}if(!silent){say(r==='denied'?'Access denied.':'Access expired.');sfx.ALERT()}}
 $('gm').textContent=r==='denied'?'ACCESS DENIED: invalid or disabled key':r==='expired'?'ACCESS EXPIRED: contact the owner':'Cannot reach the server. Check your internet.';
 $('gate').style.display='flex'}
 $('gb').onclick=()=>{const v=$('gk').value;if(nk(v).length<8){$('gm').textContent='Enter your full key';return}$('gm').textContent='Checking...';unlock(v)};
