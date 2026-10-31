@@ -1,13 +1,15 @@
 {
-  "name": "AI Signal Bot",
-  "short_name": "Alpha Signal",
+  "name": "Cyber Signal Hub",
+  "short_name": "Signal Hub",
+  "description": "Live market signals with a pro chart",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0d12",
-  "theme_color": "#0b0d12",
+  "orientation": "portrait",
+  "background_color": "#06030d",
+  "theme_color": "#06030d",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
   ]
 }

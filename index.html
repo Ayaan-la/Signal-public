@@ -2,6 +2,13 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cyber Signal Hub</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#06030d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Signal Hub">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--m:#ff2bd6;--v:#8b5cf6;--a:#39ff14;--y:#ffb800;--r:#ff2d55;--bg:#06030d;--ey:#8b5cf6}
@@ -258,7 +265,7 @@ if(!key){$('meta').textContent='Forex Live needs a free Twelve Data API key. Pas
 if(!iv){$('meta').textContent='This timeframe is not supported on Forex Live. Use 1m, 5m, 15m, 30m, 1h or 4h.';return}
 const q=n=>fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${iv}&outputsize=${n}&timezone=UTC&apikey=${encodeURIComponent(key)}`).then(r=>r.json());
 try{const j=await q(500);if(my!==gen)return;if(j.status==='error'||!j.values)throw new Error(j.message||'no data');cs=tdp(j.values);$('st').textContent='ONLINE · TWELVE DATA';$('st').className='on';render();
-bnT=setInterval(async()=>{try{const j=await q(2);if(my!==gen||!j.values)return;mergeC(tdp(j.values));render()}catch(e){}},12000)}
+bnT=setInterval(async()=>{if(document.hidden)return;try{const j=await q(2);if(my!==gen||!j.values)return;mergeC(tdp(j.values));render()}catch(e){}},Math.max(12000,S.gran*200))}
 catch(e){if(my===gen){$('st').textContent='OFFLINE';$('st').className='';$('meta').textContent='Twelve Data: '+e.message}}}
 function autoSwitch(){S.cat=S.mc='bn';S.sym='BN:BTCUSDT';fillSym();save();chips('ch0','cat',setCat);chips('ch1','mc',setMc);connect();$('meta').textContent='Deriv is unreachable on this network. Switched to CRYPTO LIVE (Binance).'}
 async function pollP(){if(S.mc!=='bn')return;try{const l=Object.keys(CATS.bn.s).map(k=>k.slice(3)),j=await bget('/api/v3/ticker/price?symbols='+encodeURIComponent(JSON.stringify(l)));j.forEach(x=>{const k='BN:'+x.symbol;prev[k]=prices[k];prices[k]=+x.price});if($('t1').classList.contains('on'))drawMk()}catch(e){}}
