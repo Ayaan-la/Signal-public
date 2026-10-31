@@ -34,7 +34,8 @@ canvas{width:100%;height:220px;display:block;margin-top:10px}nav{position:fixed;
 nav div{flex:1;text-align:center;padding:10px 0;color:#6a5890;font-size:9px;cursor:pointer}nav div span{display:block;font-size:22px;margin-bottom:3px}nav .on{color:var(--m);text-shadow:0 0 8px var(--m)}
 .mk{display:flex;justify-content:space-between;padding:13px 4px;border-bottom:1px solid #2a1458;cursor:pointer}sec{display:none}sec.on{display:block}
 #ov{position:fixed;inset:0;background:var(--bg);z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}#ov .rb{width:170px}#bl{min-height:70px;color:var(--a);font-size:10px;line-height:2}
-#pc{height:460px;touch-action:none;margin-top:10px;border:1px solid #2a1458;cursor:crosshair}</style></head><body>
+#pc{height:460px;touch-action:none;margin-top:10px;border:1px solid #2a1458;cursor:crosshair}#gate{position:fixed;inset:0;background:var(--bg);z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}#gate .rb{width:130px}#gk{width:80%;max-width:320px;background:#07030f;color:var(--a);border:1px solid #2a1458;padding:14px;font:inherit;text-align:center;letter-spacing:3px;font-size:15px}</style></head><body>
+<div id="gate"><div class="rbh rbw WAIT"></div><h1 style="flex:none;font-size:20px">ACCESS REQUIRED<small>ENTER YOUR PRIVATE KEY</small></h1><input id="gk" placeholder="XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"><button class="b pri" id="gb" style="width:80%;max-width:320px">UNLOCK</button><div id="gm" class="note" style="padding:0 20px"></div></div>
 <div class="scan"></div>
 <div id="ov"><div class="rbh rbw WAIT"></div><h1 style="flex:none;font-size:20px">CYBER SIGNAL HUB<small>REAL LIVE MARKET FEED</small></h1><div id="bl"></div><button class="b pri" id="go" style="width:80%;max-width:320px">▶ INITIALIZE SYSTEM</button></div>
 <header><div class="rbh" id="hr"></div><h1>CYBER SIGNAL HUB<small>LIVE DERIV FEED · 11 INDICATORS</small></h1><div id="st">OFFLINE</div></header>
@@ -111,7 +112,7 @@ if(cur.sig==='WAIT'){say('No clear signal. Standing by.');return}
 const l=cs[cs.length-1];hist.unshift({id:Date.now(),sym:S.sym,gran:S.gran,sig:cur.sig,price:l.close,ct:l.t,res:'PENDING'});save();announce(cur.sig)};
 function announce(s){sfx[s]&&sfx[s]();say(s==='UP'?'Signal up. Market is likely to go up.':s==='DOWN'?'Signal down. Market is likely to go down.':s==='ALERT'?'Red alert. Low volatility.':'No clear signal. Standing by.')}
 function subTicks(){if(!ws||ws.readyState!==1||S.mc==='bn'||S.mc==='fxl')return;ws.send(JSON.stringify({forget_all:'ticks'}));Object.keys(CATS[S.mc].s).forEach(s=>ws.send(JSON.stringify({ticks:s,subscribe:1})))}
-function connect(){clearTimeout(retry);clearTimeout(fo);clearInterval(bnT);const my=++gen;if(ws){ws.onclose=null;try{ws.close()}catch(e){}}cs=[];hc=[];BT=null;cur=null;$('st').textContent='LINKING...';$('st').className='';if(S.sym.startsWith('BN:'))return connBN(my);if(S.sym.startsWith('TD:'))return connTD(my);
+function connect(){if(!ACC.ok)return;clearTimeout(retry);clearTimeout(fo);clearInterval(bnT);const my=++gen;if(ws){ws.onclose=null;try{ws.close()}catch(e){}}cs=[];hc=[];BT=null;cur=null;$('st').textContent='LINKING...';$('st').className='';if(S.sym.startsWith('BN:'))return connBN(my);if(S.sym.startsWith('TD:'))return connTD(my);
 const EP=['wss://api.derivws.com/trading/v1/options/ws/public','wss://ws.derivws.com/websockets/v3?app_id=1089'];$('meta').textContent='Connecting to Deriv feed ('+(ei?'legacy':'new')+' gateway)...';ws=new WebSocket(EP[ei]);const mine=ws;clearTimeout(fo);fo=setTimeout(()=>{if(mine===ws&&!cs.length){ei=1-ei;fails++;if(fails>=2){fails=0;autoSwitch();return}$('meta').textContent='No data yet, switching gateway...';connect()}},9000);
 ws.onopen=()=>{$('st').textContent='ONLINE';$('st').className='on';
 ws.send(JSON.stringify({ticks_history:S.sym,adjust_start_time:1,count:500,end:'latest',style:'candles',granularity:S.gran,subscribe:1}));
@@ -275,4 +276,24 @@ document.querySelectorAll('.mk').forEach(e=>e.onclick=()=>{S.sym=e.dataset.s;S.c
 function drawHist(){const w=hist.filter(h=>h.res==='WIN').length,l=hist.filter(h=>h.res==='LOSS').length;
 $('hs').innerHTML=`Wins: <b class="bu">${w}</b> · Losses: <b class="be">${l}</b>${w+l?' · Win rate: '+(100*w/(w+l)).toFixed(1)+'%':''}`;
 $('hl').innerHTML=hist.length?hist.map(h=>`<div class="it"><span>${new Date(h.id).toLocaleTimeString()} · ${(ALL[h.sym]||{n:h.sym}).n} · ${h.gran/60}m</span><span class="${h.sig==='UP'?'bu':'be'}">${h.sig} @ ${h.price} · ${h.res}</span></div>`).join(''):'<div class="note">No signals yet. Tap ANALYZE REAL CANDLES to log one.</div>'}
+const K=[],H0=[];{let p=2,n=0;while(n<64){let ok=1;for(let i=2;i*i<=p;i++)if(p%i==0){ok=0;break}if(ok){K.push(Math.floor((Math.cbrt(p)%1)*2**32));if(n<8)H0.push(Math.floor((Math.sqrt(p)%1)*2**32));n++}p++}}
+function sha256(str){const b=new TextEncoder().encode(str),l=b.length,n=((l+9+63)>>6)<<6,m=new Uint8Array(n);m.set(b);m[l]=128;const dv=new DataView(m.buffer);dv.setUint32(n-4,(l*8)>>>0);dv.setUint32(n-8,Math.floor(l*8/2**32));
+let h=H0.slice();const w=new Array(64),r=(x,c)=>(x>>>c)|(x<<(32-c));
+for(let o=0;o<n;o+=64){for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);for(let i=16;i<64;i++){const s0=r(w[i-15],7)^r(w[i-15],18)^(w[i-15]>>>3),s1=r(w[i-2],17)^r(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)|0}
+let[a,b2,c,d,e,f,g,hh]=h;for(let i=0;i<64;i++){const S1=r(e,6)^r(e,11)^r(e,25),ch=(e&f)^(~e&g),t1=(hh+S1+ch+K[i]+w[i])|0,S0=r(a,2)^r(a,13)^r(a,22),mj=(a&b2)^(a&c)^(b2&c),t2=(S0+mj)|0;hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0}
+h=[h[0]+a,h[1]+b2,h[2]+c,h[3]+d,h[4]+e,h[5]+f,h[6]+g,h[7]+hh].map(x=>x|0)}
+return h.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('')}
+const ACC={ok:false,name:''},nk=k=>(k||'').trim().toUpperCase();
+async function accCheck(k){k=nk(k);try{const r=await fetch('access.json?'+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json(),e=(j.keys||{})[sha256(k)];
+if(!e||e.on===false)return'denied';if(e.e&&Date.now()>Date.parse(e.e+'T23:59:59Z'))return'expired';ACC.name=e.n||'';try{localStorage.setItem('cx_ok',Date.now())}catch(x){}return'ok'}
+catch(x){let t=0,s='';try{t=+localStorage.getItem('cx_ok')||0;s=localStorage.getItem('cx_key')}catch(y){}return(Date.now()-t<6*36e5&&s===k)?'ok':'offline'}}
+async function unlock(k,silent){const r=await accCheck(k);
+if(r==='ok'){ACC.ok=true;try{localStorage.setItem('cx_key',nk(k))}catch(x){}$('gate').style.display='none';return}
+if(r==='denied'||r==='expired'){try{localStorage.removeItem('cx_key')}catch(x){}}
+$('gm').textContent=r==='denied'?'ACCESS DENIED: invalid or disabled key':r==='expired'?'ACCESS EXPIRED: contact the owner':'Cannot reach the server. Check your internet.';
+$('gate').style.display='flex'}
+$('gb').onclick=()=>{const v=$('gk').value;if(nk(v).length<8){$('gm').textContent='Enter your full key';return}$('gm').textContent='Checking...';unlock(v)};
+async function recheck(){if(!ACC.ok)return;let k='';try{k=localStorage.getItem('cx_key')||''}catch(x){}const r=await accCheck(k);if(r==='denied'||r==='expired'){try{localStorage.removeItem('cx_key')}catch(x){}location.reload()}}
+setInterval(recheck,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)recheck()});
+{let sk='';try{sk=localStorage.getItem('cx_key')||''}catch(x){}if(sk){$('gm').textContent='Verifying access...';unlock(sk,true)}}
 </script></body></html>
